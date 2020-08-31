@@ -2,7 +2,7 @@ from collections import namedtuple
 from copy import copy
 
 # TODO: integrate into Point class
-Curve = namedtuple(('a', 'b', 'p', 'n', 'h'))
+Curve = namedtuple('Curve', ('name', 'a', 'b', 'p', 'g_x', 'g_y', 'n', 'h'))
 
 
 class Point:
