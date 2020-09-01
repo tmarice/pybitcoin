@@ -68,6 +68,7 @@ class Point:
         return self.x == other.x and self.y == other.y
 
     def __add__(self, other):
+        # TODO: consider extracting curve parameters to local variables to avoid repeated access
         if self.x == 0 and self.y == 0:
             return other
         if other.x == 0 and other.y == 0:
