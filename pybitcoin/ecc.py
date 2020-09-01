@@ -47,6 +47,17 @@ class Point:
     def inf(cls):
         return Point(0, 0)
 
+    @classmethod
+    def gen(cls):
+        '''Returns the generator point for current curve.
+
+       This point can generate all other points in the curve's subgroup by multiplying it with integers [0, r], where
+       r is order of the subgroup, i.e. the total number of points on the curve.
+       For bitcoin curve -- secp256k1 -- cofactor is 1, meaning it has only 1 subgroup, which contains all the curve's
+       points.
+       '''
+        return Point(cls.curve.g_x, cls.curve.g_y)
+
     def __str__(self):
         return f'({self.x}, {self.y})'
 
@@ -100,17 +111,3 @@ class Point:
             other //= 2
 
         return q
-
-
-# Prime of the prime field Fp
-P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
-
-# Generator point - this point can generate all other points in the curve's
-# subgroup by multiplying it with integers [0, r], where r is order of the
-# subgroup, i.e. the total number of points on the curve
-# For bitcoin curve -- secp256k1 -- cofactor is 1, meaning it has only 1
-# subgroup, which contains all the curve's points
-G = Point(
-    x=0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
-    y=0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8,
-)
