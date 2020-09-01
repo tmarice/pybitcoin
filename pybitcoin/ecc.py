@@ -79,7 +79,7 @@ class Point:
 
 
 # Prime of the prime field Fp
-P = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
+P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
 
 # Generator point - this point can generate all other points in the curve's
 # subgroup by multiplying it with integers [0, r], where r is order of the
