@@ -6,9 +6,6 @@ Curve = namedtuple('Curve', ('name', 'a', 'b', 'p', 'g_x', 'g_y', 'n', 'h'))
 
 
 class Point:
-    # TODO: multiplication isn't correct:
-    #  * check addition first
-    #  * and multiplication then
     __slots__ = ('x', 'y')
 
     def __init__(self, x, y):
@@ -41,19 +38,18 @@ class Point:
         if other.x == 0 and other.y == 0:
             return self
 
-        if self == other:
-            s = 3 * pow(self.x, 2, P) * pow(self.y, -1, P)
-            new_x = (pow(s, 2, P) - 2 * self.x) % P
-            self.y = (s * (self.x - new_x) - self.y) % P
-            self.x = new_x
+        if self.x == other.x and self.y == -other.y:
+            return Point(0, 0)
 
+        if self == other:
+            s = 3 * pow(self.x, 2) * pow(2 * self.y, -1, P)
         else:
             s = (self.y - other.y) * pow(self.x - other.x, -1, P)
-            new_x = (pow(s, 2, P) - self.x - other.x) % P
-            self.y = (s * (self.x - new_x) - self.y) % P
-            self.x = new_x
 
-        return self
+        new_x = (pow(s, 2) - self.x - other.x) % P
+        new_y = (s * (self.x - new_x) - self.y) % P
+
+        return Point(new_x, new_y)
 
     def __neg__(self):
         return Point(self.x, -self.y % P)
