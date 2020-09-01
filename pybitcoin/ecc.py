@@ -1,19 +1,43 @@
 from collections import namedtuple
 from copy import copy
 
-# TODO: integrate into Point class
-Curve = namedtuple('Curve', ('name', 'a', 'b', 'p', 'g_x', 'g_y', 'n', 'h'))
+Curve = namedtuple(
+    'Curve', (
+        'name',  # Curve name
+        'a',  # y^2 = x^3 + a*x + b
+        'b',  # y^2 = x^3 + a*x + b
+        'p',  # Prime of the prime field
+        'g_x',  # Generator point x coordinate
+        'g_y',  # Generator point y coordinat
+
+        # These two are not really relevant for calulations, but are left for completeness sake
+        'n',  # Order of the prime field
+        'h'  # Subgroup cofactor
+    )
+)
+
+secp256k1 = Curve(
+    name='secp256k1',
+    a=0,
+    b=7,
+    p=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F,
+    g_x=0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798,
+    g_y=0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8,
+    n=0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141,
+    h=1,
+)
 
 
 class Point:
     __slots__ = ('x', 'y')
+    curve = secp256k1
 
     def __init__(self, x, y):
         if x < 0 or y < 0:
             raise ValueError('Both coordinates have to be >= 0')
-        if x >= P or y >= P:
-            raise ValueError(f'Both coordinates have to < {P}')
-        if x and y and (pow(y, 2, P) - pow(x, 3, P) - 7) % P != 0:
+        if x >= self.curve.p or y >= self.curve.p:
+            raise ValueError(f'Both coordinates have to < {self.curve.p}')
+        if x and y and (pow(y, 2, self.curve.p) - pow(x, 3, self.curve.p) - 7) % self.curve.p != 0:
             raise ValueError('Point not on curve!')
 
         self.x = x
@@ -42,17 +66,17 @@ class Point:
             return Point(0, 0)
 
         if self == other:
-            s = 3 * pow(self.x, 2) * pow(2 * self.y, -1, P)
+            s = 3 * pow(self.x, 2, self.curve.p) * pow(2 * self.y, -1, self.curve.p)
         else:
-            s = (self.y - other.y) * pow(self.x - other.x, -1, P)
+            s = (self.y - other.y) * pow(self.x - other.x, -1, self.curve.p)
 
-        new_x = (pow(s, 2) - self.x - other.x) % P
-        new_y = (s * (self.x - new_x) - self.y) % P
+        new_x = (pow(s, 2, self.curve.p) - self.x - other.x) % self.curve.p
+        new_y = (s * (self.x - new_x) - self.y) % self.curve.p
 
         return Point(new_x, new_y)
 
     def __neg__(self):
-        return Point(self.x, -self.y % P)
+        return Point(self.x, -self.y % self.curve.p)
 
     def __rmul__(self, other):
         return self * other
