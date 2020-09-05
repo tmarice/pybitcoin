@@ -3,6 +3,8 @@ from itertools import takewhile
 from math import ceil
 from secrets import randbelow
 
+from tqdm import tqdm
+
 from pybitcoin.ecc import Point, secp256k1
 
 
@@ -104,6 +106,26 @@ class PrivateKey:
             testnet=prefix == b'\x6f',
             compressed=suffix == b'\x01',
         )
+
+    @classmethod
+    def vanity_address(cls, prefix, verbose=False):
+        if prefix[0] != '1':
+            raise ValueError('Prefix has to start with 1!')
+
+        address = ''
+        t = tqdm(disable=not verbose)
+        i = 0
+        while True:
+            for compressed in (True, False):
+                prv = PrivateKey(compressed=compressed)
+                pub = prv.generate_public_key()
+                address = pub.to_address()
+
+                if address.startswith(prefix):
+                    return prv
+
+                t.update(i)
+                i += 1
 
 
 class PublicKey:
