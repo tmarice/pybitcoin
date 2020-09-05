@@ -129,23 +129,24 @@ class PrivateKey:
 
 
 class PublicKey:
+    # TODO: cache address and hex represenations
     def __init__(self, x, y, compressed=True):
-        self.x = x
-        self.y = y
-        self.compressed = compressed
+        self._x = x
+        self._y = y
+        self._compressed = compressed
 
-        if self.compressed:
+        if self._compressed:
             prefix = b'\x02' if self.y % 2 == 0 else b'\x03'
-            self.data = prefix + self.x.to_bytes(32, byteorder=BIG)
+            self._data = prefix + x.to_bytes(32, byteorder=BIG)
         else:
             prefix = b'\x04'
-            self.data = prefix + self.x.to_bytes(32, byteorder=BIG) + self.y.to_bytes(32, byteorder=BIG)
+            self._data = prefix + x.to_bytes(32, byteorder=BIG) + y.to_bytes(32, byteorder=BIG)
 
     def __repr__(self):
-        return f'PublicKey(x={hex(self.x)}, y={hex(self.y)}, compressed={self.compressed})'
+        return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self._compressed})'
 
     def to_address(self):
-        return base58check_encode(payload=b'\x00' + ripemd160(sha256(self.data)))
+        return base58check_encode(payload=b'\x00' + ripemd160(sha256(self._data)))
 
     def to_hex(self):
-        return self.data.hex()
+        return self._data.hex()
