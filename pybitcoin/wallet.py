@@ -1,3 +1,5 @@
+import hashlib
+
 from pybitcoin.keys import sha256, BIG
 from pybitcoin.mnemonic_code_words import REVERSE_MNEMONIC_CODE_WORDS
 
@@ -38,9 +40,23 @@ def validate_mnemonic(mnemonic):
 
 
 class HDWallet:
-    def __init__(self):
-        self._seed = None
+    def __init__(self, seed=None):
+        if seed is None:
+            # TODO: generate new HD wallet with seed
+            pass
+        else:
+            self._seed = seed
 
     @classmethod
-    def from_mnemonic(cls, mnemonic, passphrase):
+    def from_mnemonic(cls, mnemonic, password=''):
         validate_mnemonic(mnemonic)
+
+        seed = hashlib.pbkdf2_hmac(
+            hash_name='sha512',
+            password=mnemonic.encode('utf-8'),
+            salt=b'mnemonic' + password.encode('utf-8'),
+            iterations=2048,
+            dklen=64,
+        )
+
+        return HDWallet(seed=seed)
