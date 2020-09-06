@@ -42,6 +42,7 @@ def validate_mnemonic(mnemonic):
 
 class HDWallet:
     def __init__(self, seed=None, mnemonic=None):
+        '''Do not use directly, construct using from_mnemonic() or new() methods.'''
         self._seed = seed
         self._mnemonic = mnemonic
 
