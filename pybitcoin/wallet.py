@@ -41,12 +41,9 @@ def validate_mnemonic(mnemonic):
 
 
 class HDWallet:
-    def __init__(self, seed=None):
-        if seed is None:
-            # TODO: generate new HD wallet with seed
-            pass
-        else:
-            self._seed = seed
+    def __init__(self, seed=None, mnemonic=None):
+        self._seed = seed
+        self._mnemonic = mnemonic
 
     @classmethod
     def from_mnemonic(cls, mnemonic, password=''):
@@ -57,7 +54,29 @@ class HDWallet:
             password=mnemonic.encode('utf-8'),
             salt=b'mnemonic' + password.encode('utf-8'),
             iterations=2048,
-            dklen=64,
+            dklen=64,  # 512 bits
         )
 
-        return HDWallet(seed=seed)
+        return HDWallet(seed=seed, mnemonic=mnemonic)
+
+    @classmethod
+    def new(cls, size_bits=256, password=''):
+        if size_bits not in (128, 160, 192, 224, 256):
+            raise ValueError('size_bits has to be 128, 160, 192, 224 or 256!')
+
+        entropy = randbits(size_bits)
+        entropy_bytes = entropy.to_bytes(size_bits // 8, BIG)
+        checksum = sha256(entropy_bytes)
+        checksum_length = size_bits // 32
+        checksum_part = checksum[0] >> (8 - checksum_length)
+        sequence = (entropy << checksum_length) + checksum_part
+
+        mnemonic_words = []
+        for _ in range(size_bits * 3 // 32):
+            word_index = sequence & WORD_MASK
+            mnemonic_words.append(MNEMONIC_CODE_WORDS[word_index])
+            sequence >>= 11
+
+        mnemonic = ' '.join(reversed(mnemonic_words))
+
+        return HDWallet.from_mnemonic(mnemonic, password)
