@@ -128,6 +128,11 @@ class PrivateKey:
                 i += 1
 
 
+class ExtendedPrivateKey(PrivateKey):
+    def __init__(self, chain_code, *args, **kwargs):
+        pass
+
+
 class PublicKey:
     # TODO: cache address and hex represenations
     def __init__(self, x, y, compressed=True):
@@ -150,3 +155,8 @@ class PublicKey:
 
     def to_hex(self):
         return self._data.hex()
+
+
+class ExtendedPublicKey(PublicKey):
+    def __init__(self, chain_code, *args, **kwargs):
+        pass
