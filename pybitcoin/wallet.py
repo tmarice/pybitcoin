@@ -1,15 +1,15 @@
 import hashlib
+from secrets import randbits
 
 from pybitcoin.keys import sha256, BIG
-from pybitcoin.mnemonic_code_words import REVERSE_MNEMONIC_CODE_WORDS
+from pybitcoin.mnemonic_code_words import REVERSE_MNEMONIC_CODE_WORDS, MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {
-    4: 15,
-    5: 31,
-    6: 63,
-    7: 127,
-    8: 255,
+    i: 2 ** i - 1
+    for i in range(4, 9)
 }
+
+WORD_MASK = 2 ** 11 - 1
 
 
 def validate_mnemonic(mnemonic):
