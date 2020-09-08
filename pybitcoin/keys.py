@@ -151,10 +151,10 @@ class PublicKey:
     def __repr__(self):
         return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self._compressed})'
 
-    def to_address(self):
+    def to_address(self) -> str:
         return base58check_encode(payload=b'\x00' + ripemd160(sha256(self._data)))
 
-    def to_hex(self):
+    def to_hex(self) -> str:
         return self._data.hex()
 
 
