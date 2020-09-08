@@ -1,7 +1,7 @@
 import hashlib
 from secrets import randbits
 
-from pybitcoin.keys import BIG, sha256
+from pybitcoin.keys import BIG, sha256, ExtendedPrivateKey
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {
@@ -41,8 +41,12 @@ def validate_mnemonic(mnemonic: str):
 
 
 class KeyStore:
-    def __init__(self, seed):
-        pass
+    def __init__(self, seed: bytes):
+        self._keys = {}
+
+        k = int.from_bytes(seed[:32], byteorder=BIG)
+        chain_code = int.from_bytes(seed[32:], byteorder=BIG)
+        self._keys[0] = ExtendedPrivateKey(k=k, chain_code=chain_code)
 
 
 class HDWallet:
@@ -50,6 +54,8 @@ class HDWallet:
         '''Do not use directly, construct using from_mnemonic() or new() methods.'''
         self._seed = seed
         self._mnemonic = mnemonic
+
+        self._key_store = KeyStore(seed=self._seed)
 
     @classmethod
     def from_mnemonic(cls, mnemonic: str, password=''):
