@@ -133,6 +133,14 @@ class ExtendedPrivateKey(PrivateKey):
         super().__init__(*args, **kwargs)
         self._chain_code = chain_code
 
+    def to_wif(self) -> str:
+        # TODO: Special packing for WIF
+        pass
+
+    @classmethod
+    def from_wif(self, data: str):
+        pass
+
 
 class PublicKey:
     # TODO: cache address and hex represenations
@@ -162,3 +170,10 @@ class ExtendedPublicKey(PublicKey):
     def __init__(self, chain_code: bytes, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._chain_code = chain_code
+
+    def to_wif(self) -> str:
+        pass
+
+    @classmethod
+    def from_wif(self, data: str):
+        pass
