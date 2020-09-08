@@ -48,6 +48,18 @@ class KeyStore:
         chain_code = int.from_bytes(seed[32:], byteorder=BIG)
         self._keys[0] = ExtendedPrivateKey(k=k, chain_code=chain_code)
 
+    def _derive_private_key(self, parent: int, index: int):
+        pass
+
+    def _derive_public_key(self, parent: int, index: int):
+        pass
+
+    def _derive_hardened_private_key(self, parent: int, index: int):
+        pass
+
+    def derive_key(self, path: str):
+        pass
+
 
 class HDWallet:
     def __init__(self, seed: bytes = None, mnemonic: str = None):
