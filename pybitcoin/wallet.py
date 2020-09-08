@@ -41,12 +41,16 @@ def validate_mnemonic(mnemonic: str):
 
 
 class KeyStore:
+    MASTER_PRIVATE = 'M'
+    MASTER_PUBLIC = 'm'
+
     def __init__(self, seed: bytes):
         self._keys = {}
 
         k = int.from_bytes(seed[:32], byteorder=BIG)
         chain_code = int.from_bytes(seed[32:], byteorder=BIG)
-        self._keys[0] = ExtendedPrivateKey(k=k, chain_code=chain_code)
+        self._keys[self.MASTER_PRIVATE] = ExtendedPrivateKey(k=k, chain_code=chain_code)
+        self._keys[self.MASTER_PUBLIC] = self._keys[self.MASTER_PRIVATE].generate_public_key()
 
     def _derive_private_key(self, parent: int, index: int):
         pass
