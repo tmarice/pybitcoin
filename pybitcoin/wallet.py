@@ -1,8 +1,8 @@
 import hashlib
 from secrets import randbits
 
-from pybitcoin.keys import sha256, BIG
-from pybitcoin.mnemonic_code_words import REVERSE_MNEMONIC_CODE_WORDS, MNEMONIC_CODE_WORDS
+from pybitcoin.keys import BIG, sha256
+from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {
     i: 2 ** i - 1
