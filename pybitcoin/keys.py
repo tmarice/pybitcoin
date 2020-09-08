@@ -133,6 +133,11 @@ class ExtendedPrivateKey(PrivateKey):
         super().__init__(*args, **kwargs)
         self._chain_code = chain_code
 
+    def generate_public_key(self):
+        pub = super().generate_public_key()
+
+        return ExtendedPublicKey(x=pub.x, y=pub.y, compressed=pub.compressed, chain_code=self._chain_code)
+
     def to_wif(self) -> str:
         # TODO: Special packing for WIF
         pass
