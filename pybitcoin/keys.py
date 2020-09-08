@@ -159,5 +159,6 @@ class PublicKey:
 
 
 class ExtendedPublicKey(PublicKey):
-    def __init__(self, chain_code, *args, **kwargs):
-        pass
+    def __init__(self, chain_code: bytes, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._chain_code = chain_code
