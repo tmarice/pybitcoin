@@ -12,7 +12,7 @@ CHECKSUM_MASKS = {
 WORD_MASK = 2 ** 11 - 1
 
 
-def validate_mnemonic(mnemonic):
+def validate_mnemonic(mnemonic: str):
     words = mnemonic.split(' ')
     num_words = len(words)
     if num_words not in (12, 15, 18, 21, 24):
@@ -40,14 +40,19 @@ def validate_mnemonic(mnemonic):
         raise ValueError('Invalid checksum of mnemonic sequence!')
 
 
+class KeyStore:
+    def __init__(self, seed):
+        pass
+
+
 class HDWallet:
-    def __init__(self, seed=None, mnemonic=None):
+    def __init__(self, seed: bytes = None, mnemonic: str = None):
         '''Do not use directly, construct using from_mnemonic() or new() methods.'''
         self._seed = seed
         self._mnemonic = mnemonic
 
     @classmethod
-    def from_mnemonic(cls, mnemonic, password=''):
+    def from_mnemonic(cls, mnemonic: str, password=''):
         validate_mnemonic(mnemonic)
 
         seed = hashlib.pbkdf2_hmac(

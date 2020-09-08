@@ -8,14 +8,14 @@ from tqdm import tqdm
 from pybitcoin.ecc import Point, secp256k1
 
 
-def sha256(data):
+def sha256(data: bytes) -> bytes:
     m = hashlib.sha256()
     m.update(data)
 
     return m.digest()
 
 
-def ripemd160(data):
+def ripemd160(data: bytes) -> bytes:
     if 'ripemd160' not in hashlib.algorithms_available:
         raise Exception('Make sure your OpenSSL version provides ripemd160 algorithm!')
     m = hashlib.new('ripemd160')
@@ -35,7 +35,7 @@ class Base58DecodeError(ValueError):
     pass
 
 
-def base58check_encode(payload):
+def base58check_encode(payload: bytes) -> str:
     result = []
     check = sha256(sha256(payload))[:4]
     data = payload + check
@@ -52,7 +52,7 @@ def base58check_encode(payload):
     return ''.join(reversed(result))
 
 
-def base58check_decode(data):
+def base58check_decode(data: str) -> bytes:
     leading_zeros = sum(1 for _ in takewhile('1'.__eq__, data))
 
     number = 0
@@ -72,7 +72,7 @@ def base58check_decode(data):
 
 
 class PrivateKey:
-    def __init__(self, k=None, testnet=False, compressed=False):
+    def __init__(self, k: int = None, testnet=False, compressed=False):
         self.k = randbelow(secp256k1.n) if k is None else k
         self._testnet = testnet
         self._compressed = compressed
@@ -85,7 +85,7 @@ class PrivateKey:
 
         return PublicKey(x=p.x, y=p.y, compressed=self._compressed)
 
-    def to_wif(self):
+    def to_wif(self) -> str:
         prefix = b'\x6f' if self._testnet else b'\x80'
         key = self.k.to_bytes(32, byteorder=BIG)
         suffix = b'\x01' if self._compressed else b''
@@ -94,7 +94,7 @@ class PrivateKey:
         return base58check_encode(payload)
 
     @classmethod
-    def from_wif(self, data):
+    def from_wif(self, data: str):
         payload = base58check_decode(data)
 
         prefix = payload[0]
@@ -108,7 +108,7 @@ class PrivateKey:
         )
 
     @classmethod
-    def vanity_address(cls, prefix, verbose=False):
+    def vanity_address(cls, prefix: str, verbose=False):
         if prefix[0] != '1':
             raise ValueError('Prefix has to start with 1!')
 
@@ -129,13 +129,14 @@ class PrivateKey:
 
 
 class ExtendedPrivateKey(PrivateKey):
-    def __init__(self, chain_code, *args, **kwargs):
-        pass
+    def __init__(self, chain_code: bytes, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._chain_code = chain_code
 
 
 class PublicKey:
     # TODO: cache address and hex represenations
-    def __init__(self, x, y, compressed=True):
+    def __init__(self, x: int, y: int, compressed=True):
         self._x = x
         self._y = y
         self._compressed = compressed
