@@ -149,11 +149,13 @@ class ExtendedPrivateKey(PrivateKey):
 
 class PublicKey:
     # TODO: cache address and hex represenations
+    # TODO: make compression not a init arg but an arg of the dump function
     def __init__(self, x: int, y: int, compressed=True):
         self._x = x
         self._y = y
         self._compressed = compressed
 
+        # TODO: make _data public
         if self._compressed:
             prefix = b'\x02' if self.y % 2 == 0 else b'\x03'
             self._data = prefix + x.to_bytes(32, byteorder=BIG)
