@@ -59,10 +59,10 @@ class KeyStore:
     MASTER_PRIVATE = 'M'
     MASTER_PUBLIC = 'm'
 
-    def __init__(self, seed: bytes):
+    def __init__(self, root_seed: bytes):
         self._keys = {}
 
-        # TODO: verify this, might need additiona hmac step between
+        seed = hmac_sha512(key=b'Bitcoin seed', msg=root_seed)
         k = int.from_bytes(seed[:32], byteorder=BIG)
         chain_code = int.from_bytes(seed[32:], byteorder=BIG)
 
@@ -105,7 +105,7 @@ class HDWallet:
         self._seed = seed
         self._mnemonic = mnemonic
 
-        self._key_store = KeyStore(seed=self._seed)
+        self._key_store = KeyStore(root_seed=self._seed)
 
     @classmethod
     def from_mnemonic(cls, mnemonic: str, password=''):
