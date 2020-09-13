@@ -131,12 +131,12 @@ class PrivateKey:
 class ExtendedPrivateKey(PrivateKey):
     def __init__(self, chain_code: bytes, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._chain_code = chain_code
+        self.chain_code = chain_code
 
     def generate_public_key(self):
         pub = super().generate_public_key()
 
-        return ExtendedPublicKey(x=pub.x, y=pub.y, compressed=pub.compressed, chain_code=self._chain_code)
+        return ExtendedPublicKey(x=pub._x, y=pub._y, compressed=pub._compressed, chain_code=self.chain_code)
 
     def to_wif(self) -> str:
         # TODO: Special packing for WIF
@@ -156,8 +156,9 @@ class PublicKey:
         self._compressed = compressed
 
         # TODO: make _data public
+        # TODO: check data
         if self._compressed:
-            prefix = b'\x02' if self.y % 2 == 0 else b'\x03'
+            prefix = b'\x02' if y % 2 == 0 else b'\x03'
             self._data = prefix + x.to_bytes(32, byteorder=BIG)
         else:
             prefix = b'\x04'
@@ -176,7 +177,7 @@ class PublicKey:
 class ExtendedPublicKey(PublicKey):
     def __init__(self, chain_code: bytes, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._chain_code = chain_code
+        self.chain_code = chain_code
 
     def to_wif(self) -> str:
         pass
