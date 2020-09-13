@@ -72,14 +72,19 @@ class KeyStore:
         self._keys[self.MASTER_PUBLIC] = self._keys[self.MASTER_PRIVATE].generate_public_key()
 
     def _derive_private_key(self, parent: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
+        # TODO: check if index > hardened limit, then redirect to hardened key derivation
         # TODO: cache this public key
+        # TODO: THIS DOESNT WORK, FIX
+        import ipdb; ipdb.set_trace(); # XXX: Breakpoint
         public = parent.generate_public_key()
-        data = hmac_sha512(key=parent.chain_code, digest=public._data)
+        key = parent.chain_code.to_bytes(32, byteorder=BIG)
+        msg = public._data + index.to_bytes(ceil(index.bit_length() / 8), byteorder=BIG)
+        data = hmac_sha512(key, msg)
 
         left = int.from_bytes(data[:32], byteorder=BIG)
         right = int.from_bytes(data[32:], byteorder=BIG)
 
-        if left >= secp256k1.p):
+        if left >= secp256k1.p:
             raise UseNextIndex
 
         k = (left + parent.k) % secp256k1.p
