@@ -7,10 +7,7 @@ from pybitcoin.ecc import secp256k1
 from pybitcoin.keys import BIG, sha256, ExtendedPrivateKey, ExtendedPublicKey
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
-CHECKSUM_MASKS = {
-    i: 2 ** i - 1
-    for i in range(4, 9)
-}
+CHECKSUM_MASKS = {i: 2 ** i - 1 for i in range(4, 9)}
 
 WORD_MASK = 2 ** 11 - 1
 
@@ -75,10 +72,13 @@ class KeyStore:
         # TODO: check if index > hardened limit, then redirect to hardened key derivation
         # TODO: cache this public key
         # TODO: THIS DOESNT WORK, FIX
-        import ipdb; ipdb.set_trace(); # XXX: Breakpoint
+        import ipdb
+
+        ipdb.set_trace()
+        # XXX: Breakpoint
         public = parent.generate_public_key()
         key = parent.chain_code.to_bytes(32, byteorder=BIG)
-        msg = public._data + index.to_bytes(ceil(index.bit_length() / 8), byteorder=BIG)
+        msg = public._data + (index.to_bytes(ceil(index.bit_length() / 8), byteorder=BIG) or b'\x00')
         data = hmac_sha512(key, msg)
 
         left = int.from_bytes(data[:32], byteorder=BIG)

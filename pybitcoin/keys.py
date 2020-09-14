@@ -129,14 +129,17 @@ class PrivateKey:
 
 
 class ExtendedPrivateKey(PrivateKey):
-    def __init__(self, chain_code: bytes, *args, **kwargs):
+    def __init__(self, chain_code: bytes, index: int, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
+        self.index = index
 
     def generate_public_key(self):
         pub = super().generate_public_key()
 
-        return ExtendedPublicKey(x=pub._x, y=pub._y, compressed=pub._compressed, chain_code=self.chain_code)
+        return ExtendedPublicKey(
+            x=pub._x, y=pub._y, compressed=pub._compressed, chain_code=self.chain_code, index=index
+        )
 
     def to_wif(self) -> str:
         # TODO: Special packing for WIF

@@ -2,6 +2,7 @@
 
 from pybitcoin.ecc import G
 
+
 def test_multiplication_works():
     k = 0x1E99423A4ED27608A15A2616A2B0E9E52CED330AC530EDCC32C8FFC6A526AEDD
     K = G * k
