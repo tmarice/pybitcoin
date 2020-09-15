@@ -1,5 +1,13 @@
 from collections import namedtuple
 from copy import copy
+from enum import Enum
+from math import log, floor
+
+
+class Parity(Enum):
+    ODD = 1
+    EVEN = 2
+
 
 Curve = namedtuple(
     'Curve',
@@ -27,6 +35,47 @@ secp256k1 = Curve(
     h=1,
 )
 
+def legendre(x, p):
+    r = pow(x, p >> 1, p)
+    if r == p - 1:
+        return -1
+
+    return r
+
+
+def tonelli_shanks(n, p):
+    if legendre(n, p) != 1:
+        raise ValueError(f'{n} is not a square root (mod {p})')
+
+    q, s = p - 1, 0
+    while q & 1 == 0:
+        s += 1
+        q >>= 1
+
+    z = 1
+    while legendre(z, p) != -1:
+        z += 1
+
+    m = s
+    c = pow(z, q, p)
+    t = pow(n, q, p)
+    r = pow(n, (q + 1) >> 1, p)
+
+    while t != 1:
+        t2i = t
+        for i in range(1, m):
+            t2i = t2i * t2i % p
+            if t2i == 1:
+                break
+
+        b = pow(c, 2 << (m - i - 1), p)
+        m = i
+        c = pow(b, 2, p)
+        t = t * c % p
+        r = r * b % p
+
+    return r, p - r
+
 
 class Point:
     __slots__ = ('x', 'y')
@@ -42,6 +91,16 @@ class Point:
 
         self.x = x
         self.y = y
+
+    @classmethod
+    def from_x(cls, x: int, parity: Parity) -> Point:
+        even, odd = tonelli_shanks(pow(x, 3, cls.curve.p) + 7, cls.curve.p)
+        if parity == Parity.EVEN:
+            y = even
+        else:
+            y = odd
+
+        return cls(x, y)
 
     @classmethod
     def inf(cls):
