@@ -36,6 +36,7 @@ secp256k1 = Curve(
 )
 
 def legendre(x, p):
+    '''Determine if x is quadratic (non-)residue mod p.'''
     r = pow(x, p >> 1, p)
     if r == p - 1:
         return -1
@@ -44,14 +45,17 @@ def legendre(x, p):
 
 
 def tonelli_shanks(n, p):
+    # Check solution existance
     if legendre(n, p) != 1:
         raise ValueError(f'{n} is not a square root (mod {p})')
 
+    # Factor p-1 to form q * 2^s, where q is odd
     q, s = p - 1, 0
     while q & 1 == 0:
         s += 1
         q >>= 1
 
+    # Find z which is quadratic non-residue 
     z = 1
     while legendre(z, p) != -1:
         z += 1
@@ -62,6 +66,7 @@ def tonelli_shanks(n, p):
     r = pow(n, (q + 1) >> 1, p)
 
     while t != 1:
+        # Find the least i s.t. t^(2^i) = 1 mod p
         t2i = t
         for i in range(1, m):
             t2i = t2i * t2i % p
