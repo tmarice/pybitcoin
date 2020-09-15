@@ -81,7 +81,7 @@ class Point:
     __slots__ = ('x', 'y')
     curve = secp256k1
 
-    def __init__(self, x, y):
+    def __init__(self, x:int, y: int):
         if x < 0 or y < 0:
             raise ValueError('Both coordinates have to be >= 0')
         if x >= self.curve.p or y >= self.curve.p:
@@ -103,11 +103,11 @@ class Point:
         return cls(x, y)
 
     @classmethod
-    def inf(cls):
+    def inf(cls) -> Point:
         return Point(0, 0)
 
     @classmethod
-    def gen(cls):
+    def gen(cls) -> Point:
         """Returns the generator point for current curve.
 
         This point can generate all other points in the curve's subgroup by multiplying it with integers [0, r], where
@@ -123,10 +123,10 @@ class Point:
     def __repr__(self):
         return f'Point({self.x}, {self.y})'
 
-    def __eq__(self, other):
+    def __eq__(self, other: Point) -> bool:
         return self.x == other.x and self.y == other.y
 
-    def __add__(self, other):
+    def __add__(self, other: Point) -> Point:
         # TODO: consider extracting curve parameters to local variables to avoid repeated access
         if self.x == 0 and self.y == 0:
             return other
@@ -146,13 +146,13 @@ class Point:
 
         return Point(new_x, new_y)
 
-    def __neg__(self):
+    def __neg__(self) -> Point:
         return Point(self.x, -self.y % self.curve.p)
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: int) -> Point:
         return self * other
 
-    def __mul__(self, other):
+    def __mul__(self, other: int) -> Point:
         if not isinstance(other, int):
             raise ValueError('Only scalar multiplication is defined!')
 
