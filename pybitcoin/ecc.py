@@ -5,7 +5,7 @@ from math import log, floor
 
 
 class Parity(Enum):
-    ODD = 1
+    ODD = 3
     EVEN = 2
 
 
