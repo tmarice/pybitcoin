@@ -35,52 +35,6 @@ secp256k1 = Curve(
     h=1,
 )
 
-def legendre(x, p):
-    '''Determine if x is quadratic (non-)residue mod p.'''
-    r = pow(x, p >> 1, p)
-    if r == p - 1:
-        return -1
-
-    return r
-
-
-def tonelli_shanks(n, p):
-    # Check solution existance
-    if legendre(n, p) != 1:
-        raise ValueError(f'{n} is not a square root (mod {p})')
-
-    # Factor p-1 to form q * 2^s, where q is odd
-    q, s = p - 1, 0
-    while q & 1 == 0:
-        s += 1
-        q >>= 1
-
-    # Find z which is quadratic non-residue 
-    z = 1
-    while legendre(z, p) != -1:
-        z += 1
-
-    m = s
-    c = pow(z, q, p)
-    t = pow(n, q, p)
-    r = pow(n, (q + 1) >> 1, p)
-
-    while t != 1:
-        # Find the least i s.t. t^(2^i) = 1 mod p
-        t2i = t
-        for i in range(1, m):
-            t2i = t2i * t2i % p
-            if t2i == 1:
-                break
-
-        b = pow(c, 2 << (m - i - 1), p)
-        m = i
-        c = pow(b, 2, p)
-        t = t * c % p
-        r = r * b % p
-
-    return r, p - r
-
 
 class Point:
     __slots__ = ('x', 'y')
@@ -176,3 +130,50 @@ class Point:
             other //= 2
 
         return q
+
+
+def legendre(x, p):
+    '''Determine if x is quadratic (non-)residue mod p.'''
+    r = pow(x, p >> 1, p)
+    if r == p - 1:
+        return -1
+
+    return r
+
+
+def tonelli_shanks(n, p):
+    # Check solution existance
+    if legendre(n, p) != 1:
+        raise ValueError(f'{n} is not a square root (mod {p})')
+
+    # Factor p-1 to form q * 2^s, where q is odd
+    q, s = p - 1, 0
+    while q & 1 == 0:
+        s += 1
+        q >>= 1
+
+    # Find z which is quadratic non-residue 
+    z = 1
+    while legendre(z, p) != -1:
+        z += 1
+
+    m = s
+    c = pow(z, q, p)
+    t = pow(n, q, p)
+    r = pow(n, (q + 1) >> 1, p)
+
+    while t != 1:
+        # Find the least i s.t. t^(2^i) = 1 mod p
+        t2i = t
+        for i in range(1, m):
+            t2i = t2i * t2i % p
+            if t2i == 1:
+                break
+
+        b = pow(c, 2 << (m - i - 1), p)
+        m = i
+        c = pow(b, 2, p)
+        t = t * c % p
+        r = r * b % p
+
+    return r, p - r
