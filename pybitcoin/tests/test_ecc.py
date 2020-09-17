@@ -55,6 +55,19 @@ def test_point_accepts_coordinates_on_curve(x, y):
     (0x5d5b514c0466c08adb6f6872b94a300d939d7103c5085985bc3e77d869368cb5, Parity.EVEN, 0xde1f830b0ded3a9e6ede281f0b67a8aa3f80a5ff6cad0c9a43cfac14ea397d32),
 ])
 def test_point_from_x(x, parity, y):
+    '''Constructing a point from the x coordinate should respect the given parity and return a point with the valid y'''
     p = Point.from_x(x, parity)
 
     assert p.y == y
+
+def test_inf():
+    '''Return the point at infinity.'''
+    inf = Point.inf()
+
+    assert inf.x == inf.y == 0
+
+def test_gen():
+    '''Return the generator point of current curve.'''
+    gen = Point.gen()
+
+    assert gen.x == Point.curve.g_x and gen.y == Point.curve.g_y
