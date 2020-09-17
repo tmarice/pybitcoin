@@ -52,7 +52,7 @@ class Point:
         self.y = y
 
     @classmethod
-    def from_x(cls, x: int, parity: Parity) -> Point:
+    def from_x(cls, x: int, parity: Parity):
         even, odd = tonelli_shanks(pow(x, 3, cls.curve.p) + 7, cls.curve.p)
         if parity == Parity.EVEN:
             y = even
@@ -62,11 +62,11 @@ class Point:
         return cls(x, y)
 
     @classmethod
-    def inf(cls) -> Point:
+    def inf(cls):
         return Point(0, 0)
 
     @classmethod
-    def gen(cls) -> Point:
+    def gen(cls):
         """Returns the generator point for current curve.
 
         This point can generate all other points in the curve's subgroup by multiplying it with integers [0, r], where
@@ -82,10 +82,10 @@ class Point:
     def __repr__(self):
         return f'Point({self.x}, {self.y})'
 
-    def __eq__(self, other: Point) -> bool:
+    def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
 
-    def __add__(self, other: Point) -> Point:
+    def __add__(self, other):
         if self.x == 0 and self.y == 0:
             return other
         if other.x == 0 and other.y == 0:
@@ -104,13 +104,13 @@ class Point:
 
         return Point(new_x, new_y)
 
-    def __neg__(self) -> Point:
+    def __neg__(self):
         return Point(self.x, -self.y % self.curve.p)
 
-    def __rmul__(self, other: int) -> Point:
+    def __rmul__(self, other: int):
         return self * other
 
-    def __mul__(self, other: int) -> Point:
+    def __mul__(self, other: int):
         if not isinstance(other, int):
             raise ValueError('Only scalar multiplication is defined!')
 
