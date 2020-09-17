@@ -14,25 +14,17 @@ def test_point_rejects_negative_coordinates(x, y):
         Point(x, y)
 
 
-# TODO: refactor these 2 tests somehow: do not duplicate code
 @given(
-    x=st.integers(),
-    y=st.integers(min_value=secp256k1.p),
+    a=st.integers(),
+    b=st.integers(min_value=secp256k1.p),
 )
-def test_point_rejects_larger_than_curve_p(x, y):
-    '''Point raises ValueError if y coordinate is larger than curve's prime.'''
+def test_point_rejects_larger_than_curve_p(a, b):
+    '''Point raises ValueError if x or y coordinate is larger than curve's prime.'''
     with pytest.raises(ValueError):
-        Point(x, y)
+        Point(a, b)
 
-
-@given(
-    x=st.integers(min_value=secp256k1.p),
-    y=st.integers(),
-)
-def test_point_rejects_larger_than_curve_p(x, y):
-    '''Point raises ValueError if x coordinate is larger than curve's prime.'''
     with pytest.raises(ValueError):
-        Point(x, y)
+        Point(b, a)
 
 
 @given(
