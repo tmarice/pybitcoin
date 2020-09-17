@@ -53,11 +53,11 @@ class Point:
 
     @classmethod
     def from_x(cls, x: int, parity: Parity):
-        even, odd = tonelli_shanks(pow(x, 3, cls.curve.p) + 7, cls.curve.p)
-        if parity == Parity.EVEN:
-            y = even
+        y1, y2 = tonelli_shanks(pow(x, 3, cls.curve.p) + 7, cls.curve.p)
+        if parity == Parity.ODD:
+            y = y1 if y1 & 1 else y2
         else:
-            y = odd
+            y = y2 if y1 & 1 else y1
 
         return cls(x, y)
 
