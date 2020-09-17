@@ -1,5 +1,5 @@
 import pytest
-from pybitcoin.ecc import secp256k1, Point
+from pybitcoin.ecc import secp256k1, Point, Parity
 from hypothesis import given, strategies as st, assume
 
 
@@ -37,11 +37,24 @@ def test_point_rejects_coordinates_not_on_curve(x, y):
     with pytest.raises(ValueError):
         Point(x, y)
 
-
-def test_point_accepts_coordinates_on_curve():
+@pytest.mark.parametrize('x, y', [
+    (0, 0),
+    (secp256k1.g_x, secp256k1.g_y),
+    (0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798, 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8),
+    (0xF028892BAD7ED57D2FB57BF33081D5CFCF6F9ED3D3D7F159C2E2FFF579DC341A, 0x07CF33DA18BD734C600B96A72BBC4749D5141C90EC8AC328AE52DDFE2E505BDB),
+])
+def test_point_accepts_coordinates_on_curve(x, y):
     '''Point constructor doesn't raise for valid coordinates on SECP256K1 curve.'''
-    pass
+    Point(x, y)
 
 
-def test_point_from_x_odd():
-    pass
+@pytest.mark.parametrize('x, parity, y', [
+    (0x5b134f5d1f47fa961f78cd97720b34fbeb27d21c7879cdf92e0ca8fe75a2892e, Parity.ODD, 0x5fff341efc04b767e279cc142af59a8bfa6d104fd720baff44ede8b10259f27d),
+    (0x8a3730423429b7a601c7c273567104d61058c1d95d8efaddf124eaf7f1bf0fe5, Parity.EVEN, 0x37d50fe029b4900de9adca10186de0a7fff7522f926a9a1b746d376a250b8eee),
+    (0x74af52b65a853edb9272a6e9ca48fc4dfec8e7a8c6c72b099ab84995f6806da8, Parity.ODD, 0xd2b28e9b2f06dbfba10b36d067a3288886ebcd2cc13725b2ea2e35b9009311e7),
+    (0x5d5b514c0466c08adb6f6872b94a300d939d7103c5085985bc3e77d869368cb5, Parity.EVEN, 0xde1f830b0ded3a9e6ede281f0b67a8aa3f80a5ff6cad0c9a43cfac14ea397d32),
+])
+def test_point_from_x(x, parity, y):
+    p = Point.from_x(x, parity)
+
+    assert p.y == y
