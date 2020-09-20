@@ -91,7 +91,7 @@ class Point:
         if other.x == 0 and other.y == 0:
             return self
 
-        if self.x == other.x and self.y == -other.y:
+        if self.x == other.x and self.y + other.y == self.curve.p:
             return Point(0, 0)
 
         if self == other:
