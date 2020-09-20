@@ -4,14 +4,16 @@ from pybitcoin.tests.ecc.fixtures import POINTS, ADD_POINTS
 from hypothesis import given, strategies as st, assume
 
 @given(
-    x=st.integers(),
-    y=st.integers(),
+    a=st.integers(max_value=-1),
+    b=st.integers(),
 )
-def test_point_rejects_negative_coordinates(x, y):
+def test_point_rejects_negative_coordinates(a, b):
     '''Point raises ValueError if any coordinate is smaller than 0.'''
-    assume(x < 0 or y < 0)
     with pytest.raises(ValueError):
-        Point(x, y)
+        Point(a, b)
+
+    with pytest.raises(ValueError):
+        Point(b, a)
 
 
 @given(
