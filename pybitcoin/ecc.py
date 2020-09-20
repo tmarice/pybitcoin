@@ -5,8 +5,8 @@ from math import log, floor
 
 
 class Parity(Enum):
-    ODD = 3
-    EVEN = 2
+    EVEN = 0
+    ODD = 1
 
 
 Curve = namedtuple(
