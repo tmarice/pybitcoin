@@ -1,6 +1,6 @@
 import pytest
 from pybitcoin.ecc import secp256k1, Point, Parity
-from pybitcoin.tests.ecc.fixtures import POINTS, ADD_POINTS
+from pybitcoin.tests.ecc.fixtures import POINTS, ADD_POINTS, MUL_POINTS
 from hypothesis import given, strategies as st, assume
 
 @given(
@@ -94,3 +94,40 @@ def test_add(data):
     p2 = Point(*coords_2)
 
     assert p1 + p2 == Point(*coords_res)
+
+
+@given(coords=st.sampled_from(POINTS))
+def test_neg(coords):
+    assume(coords != (0, 0))
+
+    p = Point(*coords)
+    p_ = -p
+
+    assert p.x == p_.x and p.y + p_.y == secp256k1.p
+
+
+def test_neg_infinity():
+    p = Point.inf()
+    p_ = -p
+
+    assert p == p_
+
+
+@given(coords=st.sampled_from(POINTS))
+def test_mul_other_not_int(coords):
+    p = Point(*coords)
+
+    with pytest.raises(ValueError):
+        p * p
+
+    with pytest.raises(ValueError):
+        p * 1.2
+
+
+@given(data=st.sampled_from(MUL_POINTS))
+def test_mul(data):
+    coords_1, x, coords_2 = data
+    p1 = Point(*coords_1)
+    p2 = Point(*coords_2)
+
+    assert p1 * x == x * p1 == p2
