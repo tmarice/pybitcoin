@@ -53,9 +53,11 @@ def base58check_encode(payload: bytes) -> str:
 
 
 def base58check_decode(data: str) -> bytes:
+    # TODO: validate if data is base58 encoded
     leading_zeros = sum(1 for _ in takewhile('1'.__eq__, data))
 
     number = 0
+    # TODO: Optimize the repeated exponentiation
     for i, c in enumerate(data[::-1]):
         if c != '1':
             number += BASE58_ALPHABET_REVERSE[c] * pow(58, i)
