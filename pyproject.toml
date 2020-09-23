@@ -1,4 +1,4 @@
 [tool.black]
 line-length = 120
 skip-string-normalization = true
-exclude = "*/fixtures.py"
+force-exclude = "/fixtures.py"
