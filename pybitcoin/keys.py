@@ -73,24 +73,28 @@ def base58check_decode(data: str) -> bytes:
     return payload
 
 
+class InvalidKeyError(ValueError):
+    pass
+
+
 class PrivateKey:
     def __init__(self, k: int = None, testnet=False, compressed=False):
+        if k is not None and not (0 < k < secp256k1.p):
+            raise InvalidKeyError(f'k={k} must be >0 and <{secp256k1.p}')
         self.k = randbelow(secp256k1.n) if k is None else k
         self._testnet = testnet
-        self._compressed = compressed
+        self.compressed = compressed
 
     def __repr__(self):
-        return f'PrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self._compressed})'
+        return f'PrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self.compressed})'
 
     def generate_public_key(self):
-        p = self.k * Point.gen()
-
-        return PublicKey(x=p.x, y=p.y, compressed=self._compressed)
+        return PublicKey(point=self.k * Point.gen(), compressed=self.compressed)
 
     def to_wif(self) -> str:
         prefix = b'\x6f' if self._testnet else b'\x80'
         key = self.k.to_bytes(32, byteorder=BIG)
-        suffix = b'\x01' if self._compressed else b''
+        suffix = b'\x01' if self.compressed else b''
 
         payload = prefix + key + suffix
         return base58check_encode(payload)
@@ -155,25 +159,36 @@ class ExtendedPrivateKey(PrivateKey):
 class PublicKey:
     # TODO: cache address and hex represenations
     # TODO: make compression not a init arg but an arg of the dump function
-    def __init__(self, x: int, y: int, compressed=True):
-        self._x = x
-        self._y = y
-        self._compressed = compressed
+    def __init__(self, point: Point, compressed=True):
+        self._point = point
+        self.compressed = compressed
 
         # TODO: make _data public
         # TODO: check data
-        if self._compressed:
-            prefix = b'\x02' if y % 2 == 0 else b'\x03'
-            self._data = prefix + x.to_bytes(32, byteorder=BIG)
+        if self.compressed:
+            prefix = b'\x02' if point.y % 2 == 0 else b'\x03'
+            self._data = prefix + point.x.to_bytes(32, byteorder=BIG)
         else:
             prefix = b'\x04'
-            self._data = prefix + x.to_bytes(32, byteorder=BIG) + y.to_bytes(32, byteorder=BIG)
+            self._data = prefix + point.x.to_bytes(32, byteorder=BIG) + point.y.to_bytes(32, byteorder=BIG)
 
     def __repr__(self):
-        return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self._compressed})'
+        return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self.compressed})'
+
+    @property
+    def x(self):
+        return self._point.x
+
+    @property
+    def y(self):
+        return self._point.y
+
+    # TODO: property?
+    def identifier(self):
+        return ripemd160(sha256(self._data))
 
     def to_address(self) -> str:
-        return base58check_encode(payload=b'\x00' + ripemd160(sha256(self._data)))
+        return base58check_encode(payload=b'\x00' + self.identifier())
 
     def to_hex(self) -> str:
         return self._data.hex()
