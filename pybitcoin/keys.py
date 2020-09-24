@@ -59,10 +59,11 @@ def base58check_decode(data: str) -> bytes:
     leading_zeros = sum(1 for _ in takewhile('1'.__eq__, data))
 
     number = 0
-    # TODO: Optimize the repeated exponentiation
+    p = 1
     for i, c in enumerate(data[::-1]):
         if c != '1':
-            number += BASE58_ALPHABET_REVERSE[c] * pow(58, i)
+            number += BASE58_ALPHABET_REVERSE[c] * p
+        p *= 58
 
     num_bytes = ceil(number.bit_length() / 8)
     bytes_data = number.to_bytes(num_bytes, byteorder=BIG)
