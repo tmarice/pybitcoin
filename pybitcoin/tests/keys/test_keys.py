@@ -68,12 +68,14 @@ def test_generate_public_key(k, compressed):
 
 
 @given(
-    k=st.integers(min_value=1, max_value=secp256k1.p - 1),
     compressed=st.booleans(),
     testnet=st.booleans(),
 )
-def test_to_wif(k, compressed, testnet):
-    pass
+def test_wif_from_to(compressed, testnet):
+    p = PrivateKey(compressed=compressed, testnet=testnet)
+    p_ = PrivateKey.from_wif(p.to_wif())
+
+    assert p == p_
 
 
 def test_from_wif():
