@@ -106,7 +106,7 @@ class PrivateKey:
     def from_wif(self, data: str):
         payload = base58check_decode(data)
 
-        prefix = payload[0]
+        prefix = payload[0:1]
         key = payload[1:33]
         suffix = payload[33:34]
 
