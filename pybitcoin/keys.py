@@ -53,7 +53,9 @@ def base58check_encode(payload: bytes) -> str:
 
 
 def base58check_decode(data: str) -> bytes:
-    # TODO: validate if data is base58 encoded
+    if any(c not in BASE58_ALPHABET_REVERSE for c in data):
+        raise Base58DecodeError('Given string is not Base58Check encoded!')
+
     leading_zeros = sum(1 for _ in takewhile('1'.__eq__, data))
 
     number = 0

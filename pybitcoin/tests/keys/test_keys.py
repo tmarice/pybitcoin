@@ -1,4 +1,5 @@
 from hypothesis import given, strategies as st, assume
+from itertools import takewhile
 from pybitcoin.ecc import secp256k1, Point
 import pytest
 from pybitcoin.keys import (
@@ -26,6 +27,17 @@ def test_base58check_encode_decode(leading_zeros, data):
 @given(data=st.text(alphabet=BASE58_ALPHABET))
 def test_base58check_decode_bad_check(data):
     '''Check Base58DecodeError is raised if check digits are wrong.'''
+    with pytest.raises(Base58DecodeError):
+        base58check_decode(data)
+
+
+@given(
+    good_data=st.text(alphabet=BASE58_ALPHABET),
+    bad_data=st.text(alphabet='0OlI', min_size=1),
+)
+def test_base58check_decode_bad_alphabet(good_data, bad_data):
+    data = good_data + bad_data
+
     with pytest.raises(Base58DecodeError):
         base58check_decode(data)
 
