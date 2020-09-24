@@ -88,7 +88,3 @@ def test_wif_from_to(compressed, testnet):
     p_ = PrivateKey.from_wif(p.to_wif())
 
     assert p == p_
-
-
-def test_from_wif():
-    pass
