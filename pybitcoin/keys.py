@@ -95,7 +95,7 @@ class PrivateKey:
         return PublicKey(point=self.k * Point.gen(), compressed=self.compressed)
 
     def to_wif(self) -> str:
-        prefix = b'\x6f' if self._testnet else b'\x80'
+        prefix = b'\xef' if self._testnet else b'\x80'
         key = self.k.to_bytes(32, byteorder=BIG)
         suffix = b'\x01' if self.compressed else b''
 
@@ -112,7 +112,7 @@ class PrivateKey:
 
         return PrivateKey(
             k=int.from_bytes(key, byteorder=BIG),
-            testnet=prefix == b'\x6f',
+            testnet=prefix == b'\xef',
             compressed=suffix == b'\x01',
         )
 
