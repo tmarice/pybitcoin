@@ -88,6 +88,9 @@ class PrivateKey:
     def __repr__(self):
         return f'PrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self.compressed})'
 
+    def __eq__(self, other):
+        return self.k == other.k and self.compressed == other.compressed and self._testnet == other._testnet
+
     def generate_public_key(self):
         return PublicKey(point=self.k * Point.gen(), compressed=self.compressed)
 
