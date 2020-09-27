@@ -1,9 +1,12 @@
+from unittest.mock import patch, call
 from hypothesis import given, strategies as st, assume
 from pybitcoin.tests.ecc.fixtures import POINTS
 from itertools import takewhile
 from pybitcoin.ecc import secp256k1, Point
 import pytest
 from pybitcoin.keys import (
+    sha256,
+    ripemd160,
     base58check_encode,
     base58check_decode,
     BASE58_ALPHABET,
@@ -12,6 +15,18 @@ from pybitcoin.keys import (
     InvalidKeyError,
     PublicKey,
 )
+
+@given(data=st.binary())
+def test_sha256(data):
+    digest = sha256(data)
+
+    assert len(digest) == 32
+
+@given(data=st.binary())
+def test_ripemd160(data):
+    digest = ripemd160(data)
+
+    assert len(digest) == 20
 
 
 @given(
