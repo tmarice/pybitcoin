@@ -9,19 +9,13 @@ from pybitcoin.ecc import Point, secp256k1
 
 
 def sha256(data: bytes) -> bytes:
-    m = hashlib.sha256()
-    m.update(data)
-
-    return m.digest()
+    return hashlib.sha256(data).digest()
 
 
 def ripemd160(data: bytes) -> bytes:
     if 'ripemd160' not in hashlib.algorithms_available:
         raise Exception('Make sure your OpenSSL version provides ripemd160 algorithm!')
-    m = hashlib.new('ripemd160')
-    m.update(data)
-
-    return m.digest()
+    return hashlib.new('ripemd160', data).digest()
 
 
 # Byte order bit endian
