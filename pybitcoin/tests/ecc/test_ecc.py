@@ -3,6 +3,7 @@ from pybitcoin.ecc import secp256k1, Point, Parity
 from pybitcoin.tests.ecc.fixtures import POINTS, ADD_POINTS, MUL_POINTS
 from hypothesis import given, strategies as st, assume
 
+
 @given(
     a=st.integers(max_value=-1),
     b=st.integers(),
@@ -38,6 +39,7 @@ def test_point_rejects_coordinates_not_on_curve(x, y):
     assume((pow(y, 2, secp256k1.p) - pow(x, 3, secp256k1.p) - 7 % secp256k1.p) != 0)
     with pytest.raises(ValueError):
         Point(x, y)
+
 
 @given(coords=st.sampled_from(POINTS))
 def test_point_accepts_coordinates_on_curve(coords):

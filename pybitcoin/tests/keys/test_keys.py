@@ -1,26 +1,30 @@
-from unittest.mock import patch, call
-from hypothesis import given, strategies as st, assume
-from pybitcoin.tests.ecc.fixtures import POINTS
-from itertools import takewhile
-from pybitcoin.ecc import secp256k1, Point
+from unittest.mock import call, patch
+
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
+from pybitcoin.ecc import Point, secp256k1
 from pybitcoin.keys import (
-    sha256,
-    ripemd160,
-    base58check_encode,
-    base58check_decode,
     BASE58_ALPHABET,
     Base58DecodeError,
-    PrivateKey,
     InvalidKeyError,
+    PrivateKey,
     PublicKey,
+    base58check_decode,
+    base58check_encode,
+    ripemd160,
+    sha256,
 )
+from pybitcoin.tests.ecc.fixtures import POINTS
+
 
 @given(data=st.binary())
 def test_sha256(data):
     digest = sha256(data)
 
     assert len(digest) == 32
+
 
 @given(data=st.binary())
 def test_ripemd160(data):
@@ -34,8 +38,8 @@ def test_ripemd160(data):
     data=st.binary(),
 )
 def test_base58check_encode_decode(leading_zeros, data):
-    '''Check if b58c encode & decode are inverses of each other.'''
-    payload = b'\x00' * leading_zeros + data
+    """Check if b58c encode & decode are inverses of each other."""
+    payload = b"\x00" * leading_zeros + data
 
     assert base58check_decode(base58check_encode(payload)) == payload
 
@@ -43,14 +47,14 @@ def test_base58check_encode_decode(leading_zeros, data):
 # TODO: Mark this test as flaky
 @given(data=st.text(alphabet=BASE58_ALPHABET))
 def test_base58check_decode_bad_check(data):
-    '''Check Base58DecodeError is raised if check digits are wrong.'''
+    """Check Base58DecodeError is raised if check digits are wrong."""
     with pytest.raises(Base58DecodeError):
         base58check_decode(data)
 
 
 @given(
     good_data=st.text(alphabet=BASE58_ALPHABET),
-    bad_data=st.text(alphabet='0OlI', min_size=1),
+    bad_data=st.text(alphabet="0OlI", min_size=1),
 )
 def test_base58check_decode_bad_alphabet(good_data, bad_data):
     data = good_data + bad_data
@@ -105,6 +109,7 @@ def test_private_key_wif_from_to(compressed, testnet):
 
     assert p == p_
 
+
 @given(coords=st.sampled_from(POINTS))
 def test_public_key_x_y_properties(coords):
     pubk = PublicKey(point=Point(*coords))
@@ -122,23 +127,34 @@ def test_public_key_get_data(coords, compressed):
     if compressed:
         expected_length = 33
         if coords[1] % 2 == 0:
-            expected_prefix = b'\x02'
+            expected_prefix = b"\x02"
         else:
-            expected_prefix = b'\x03'
+            expected_prefix = b"\x03"
     else:
         expected_length = 65
-        expected_prefix = b'\x04'
+        expected_prefix = b"\x04"
 
     assert len(data) == expected_length
     assert data[0:1] == expected_prefix
 
 
-@given(coords=st.sampled_from(POINTS), compressed=st.booleans(),)
+@given(
+    coords=st.sampled_from(POINTS),
+    compressed=st.booleans(),
+)
 def test_public_key_get_identifier(coords, compressed):
     pubk = PublicKey(point=Point(*coords))
 
-    with patch('pybitcoin.keys.sha256') as mock_sha256, patch('pybitcoin.keys.ripemd160') as mock_ripemd160:
+    with patch("pybitcoin.keys.sha256") as mock_sha256, patch("pybitcoin.keys.ripemd160") as mock_ripemd160:
         identifier = pubk.get_identifier(compressed=compressed)
 
         assert mock_ripemd160.call_count == 1
         assert mock_ripemd160.call_args == call(mock_sha256.return_value)
+
+
+@given(
+    coords=st.sampled_from(POINTS),
+    compressed=st.booleans(),
+)
+def test_public_key_to_address(coords, compressed):
+    pass

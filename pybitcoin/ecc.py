@@ -40,7 +40,7 @@ class Point:
     __slots__ = ('x', 'y')
     curve = secp256k1
 
-    def __init__(self, x:int, y: int):
+    def __init__(self, x: int, y: int):
         if x < 0 or y < 0:
             raise ValueError('Both coordinates have to be >= 0')
         if x >= self.curve.p or y >= self.curve.p:
@@ -151,7 +151,7 @@ def tonelli_shanks(n, p):
         s += 1
         q >>= 1
 
-    # Find z which is quadratic non-residue 
+    # Find z which is quadratic non-residue
     z = 1
     while legendre(z, p) != -1:
         z += 1
