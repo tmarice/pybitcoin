@@ -35,7 +35,6 @@ def validate_mnemonic(mnemonic: str):
     sequence = (data >> checksum_length).to_bytes(sequence_num_bytes, BIG)
     input_checksum = data & CHECKSUM_MASKS[checksum_length]
 
-    # TODO: let sha256 handle integers by converting to bytes
     sequence_checksum = sha256(sequence)
     # Extract only first checksum_length BITS from first BYTE of checksum
     if sequence_checksum[0] >> (8 - checksum_length) != input_checksum:
