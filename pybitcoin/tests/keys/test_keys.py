@@ -95,3 +95,24 @@ def test_public_key_x_y_properties(coords):
     pubk = PublicKey(point=Point(*coords))
 
     assert (pubk.x, pubk.y) == coords
+
+
+@given(
+    coords=st.sampled_from(POINTS),
+    compressed=st.booleans(),
+)
+def test_public_key_get_data(coords, compressed):
+    data = PublicKey(point=Point(*coords))._get_data(compressed=compressed)
+
+    if compressed:
+        expected_length = 33
+        if coords[1] % 2 == 0:
+            expected_prefix = b'\x02'
+        else:
+            expected_prefix = b'\x03'
+    else:
+        expected_length = 65
+        expected_prefix = b'\x04'
+
+    assert len(data) == expected_length
+    assert data[0:1] == expected_prefix
