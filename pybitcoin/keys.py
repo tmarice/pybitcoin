@@ -207,11 +207,11 @@ class PublicKey:
 
         return self._data
 
-    def identifier(self, compressed=True):
+    def get_identifier(self, compressed=True) -> bytes:
         return ripemd160(sha256(self._get_data(compressed=compressed)))
 
     def to_address(self, compressed=True) -> str:
-        return base58check_encode(payload=b'\x00' + self.identifier(compressed=compressed))
+        return base58check_encode(payload=b'\x00' + self.get_identifier(compressed=compressed))
 
     def to_hex(self, compressed=True) -> str:
         return self._get_data(compressed=compressed).hex()
