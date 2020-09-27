@@ -2,3 +2,6 @@
 line-length = 120
 skip-string-normalization = true
 force-exclude = "/fixtures.py"
+
+[tool.pytest.ini_options]
+mock_use_standalone_module = true
