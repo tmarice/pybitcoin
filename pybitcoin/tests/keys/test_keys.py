@@ -155,6 +155,11 @@ def test_public_key_get_identifier(coords, compressed):
 @given(
     coords=st.sampled_from(POINTS),
     compressed=st.booleans(),
+    testnet=st.booleans(),
 )
-def test_public_key_to_address(coords, compressed):
-    pass
+def test_public_key_to_address(coords, compressed, testnet):
+    address = PublicKey(Point(*coords), testnet=testnet).to_address(compressed=compressed)
+
+    expected_prefixes = ['1'] if not testnet else ['m', 'n']
+
+    assert address[0] in expected_prefixes
