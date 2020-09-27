@@ -1,10 +1,10 @@
 import hashlib
 import hmac
-from secrets import randbits
 from math import ceil
+from secrets import randbits
 
 from pybitcoin.ecc import secp256k1
-from pybitcoin.keys import BIG, sha256, ExtendedPrivateKey, ExtendedPublicKey
+from pybitcoin.keys import BIG, ExtendedPrivateKey, ExtendedPublicKey, sha256
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {i: 2 ** i - 1 for i in range(4, 9)}
