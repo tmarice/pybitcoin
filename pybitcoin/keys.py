@@ -95,7 +95,7 @@ class PrivateKey:
         return self.k == other.k and self.compressed == other.compressed and self._testnet == other._testnet
 
     def generate_public_key(self):
-        return PublicKey(point=self.k * Point.gen(), compressed=self.compressed)
+        return PublicKey(point=self.k * Point.gen())
 
     def to_wif(self) -> str:
         prefix = b'\xef' if self._testnet else b'\x80'
@@ -179,20 +179,9 @@ class ExtendedPrivateKey(PrivateKey):
 
 
 class PublicKey:
-    # TODO: cache address and hex represenations
-    # TODO: make compression not a init arg but an arg of the dump function
-    def __init__(self, point: Point, compressed=True):
+    def __init__(self, point: Point):
         self._point = point
-        self.compressed = compressed
-
-        # TODO: make _data public
-        # TODO: check data
-        if self.compressed:
-            prefix = b'\x02' if point.y % 2 == 0 else b'\x03'
-            self._data = prefix + point.x.to_bytes(32, byteorder=BIG)
-        else:
-            prefix = b'\x04'
-            self._data = prefix + point.x.to_bytes(32, byteorder=BIG) + point.y.to_bytes(32, byteorder=BIG)
+        self._data = None
 
     def __repr__(self):
         return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self.compressed})'
@@ -205,15 +194,27 @@ class PublicKey:
     def y(self):
         return self._point.y
 
-    # TODO: property?
-    def identifier(self):
-        return ripemd160(sha256(self._data))
+    def _get_data(self, compressed=True):
+        if self._data is not None:
+            return self._data
 
-    def to_address(self) -> str:
-        return base58check_encode(payload=b'\x00' + self.identifier())
+        if compressed:
+            prefix = b'\x02' if self.y % 2 == 0 else b'\x03'
+            self._data = prefix + self.x.to_bytes(32, byteorder=BIG)
+        else:
+            prefix = b'\x04'
+            self._data = prefix + self.x.to_bytes(32, byteorder=BIG) + self.y.to_bytes(32, byteorder=BIG)
 
-    def to_hex(self) -> str:
-        return self._data.hex()
+        return self._data
+
+    def identifier(self, compressed=True):
+        return ripemd160(sha256(self._get_data(compressed=compressed)))
+
+    def to_address(self, compressed=True) -> str:
+        return base58check_encode(payload=b'\x00' + self.identifier(compressed=compressed))
+
+    def to_hex(self, compressed=True) -> str:
+        return self._get_data(compressed=compressed).hex()
 
 
 class ExtendedPublicKey(PublicKey):

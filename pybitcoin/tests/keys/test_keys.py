@@ -1,4 +1,5 @@
 from hypothesis import given, strategies as st, assume
+from pybitcoin.tests.ecc.fixtures import POINTS
 from itertools import takewhile
 from pybitcoin.ecc import secp256k1, Point
 import pytest
@@ -9,6 +10,7 @@ from pybitcoin.keys import (
     Base58DecodeError,
     PrivateKey,
     InvalidKeyError,
+    PublicKey,
 )
 
 
@@ -71,20 +73,25 @@ def test_private_key_k_invalid(k_1, k_2):
     k=st.integers(min_value=1, max_value=secp256k1.p - 1),
     compressed=st.booleans(),
 )
-def test_generate_public_key(k, compressed):
+def test_private_key_generate_public_key(k, compressed):
     prv = PrivateKey(k=k, compressed=compressed)
     pub = prv.generate_public_key()
 
     assert k * Point.gen() == Point(pub.x, pub.y)
-    assert prv.compressed == pub.compressed
 
 
 @given(
     compressed=st.booleans(),
     testnet=st.booleans(),
 )
-def test_wif_from_to(compressed, testnet):
+def test_private_key_wif_from_to(compressed, testnet):
     p = PrivateKey(compressed=compressed, testnet=testnet)
     p_ = PrivateKey.from_wif(p.to_wif())
 
     assert p == p_
+
+@given(coords=st.sampled_from(POINTS))
+def test_public_key_x_y_properties(coords):
+    pubk = PublicKey(point=Point(*coords))
+
+    assert (pubk.x, pubk.y) == coords
