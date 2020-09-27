@@ -146,7 +146,7 @@ def test_public_key_get_identifier(coords, compressed):
     pubk = PublicKey(point=Point(*coords))
 
     with patch("pybitcoin.keys.sha256") as mock_sha256, patch("pybitcoin.keys.ripemd160") as mock_ripemd160:
-        identifier = pubk.get_identifier(compressed=compressed)
+        pubk.get_identifier(compressed=compressed)
 
         assert mock_ripemd160.call_count == 1
         assert mock_ripemd160.call_args == call(mock_sha256.return_value)

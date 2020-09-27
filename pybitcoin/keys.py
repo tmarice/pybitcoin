@@ -89,7 +89,7 @@ class PrivateKey:
         return self.k == other.k and self.compressed == other.compressed and self._testnet == other._testnet
 
     def generate_public_key(self):
-        return PublicKey(point=self.k * Point.gen())
+        return PublicKey(point=self.k * Point.gen(), testnet=self._testnet)
 
     def to_wif(self) -> str:
         prefix = b'\xef' if self._testnet else b'\x80'
@@ -173,9 +173,10 @@ class ExtendedPrivateKey(PrivateKey):
 
 
 class PublicKey:
-    def __init__(self, point: Point):
+    def __init__(self, point: Point, testnet=False):
         self._point = point
         self._data = None
+        self._testnet = testnet
 
     def __repr__(self):
         return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self.compressed})'
@@ -205,7 +206,8 @@ class PublicKey:
         return ripemd160(sha256(self._get_data(compressed=compressed)))
 
     def to_address(self, compressed=True) -> str:
-        return base58check_encode(payload=b'\x00' + self.get_identifier(compressed=compressed))
+        prefix = b'\x00' if not self._testnet else b'\x6f'
+        return base58check_encode(payload=prefix + self.get_identifier(compressed=compressed))
 
     def to_hex(self, compressed=True) -> str:
         return self._get_data(compressed=compressed).hex()
