@@ -3,7 +3,7 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS
-from pybitcoin.wallet import validate_mnemonic
+from pybitcoin.wallet import hmac_sha512, validate_mnemonic
 
 
 @st.composite
@@ -42,12 +42,24 @@ def test_validate_mnemonic_invalid_checksum():
     pass
 
 
-def test_validate_menmonic_ok_mnemonics():
-    pass
+@pytest.mark.parametrize(
+    'mnemonic',
+    [
+        'answer act aspect mansion report own orphan mixed leader gate siren there',
+        'educate magnet hub kidney trophy invite amused rival dream jaguar finish mechanic',
+        'thumb citizen system submit certain stairs diamond elephant remove butter edge also galaxy umbrella awesome state husband audit agent rotate pulp transfer path harbor',
+        'harbor bind butter advance erode enhance rough album photo mandate orbit order teach frown already mistake candy quality nasty split hen fresh agent syrup',
+    ],
+)
+def test_validate_menmonic_ok_mnemonics(mnemonic):
+    validate_mnemonic(mnemonic)
 
 
-def test_hmac_sha512():
-    pass
+@given(key=st.binary(), msg=st.binary())
+def test_hmac_sha512(key, msg):
+    digest = hmac_sha512(key, msg)
+
+    assert len(digest) == 64
 
 
 def test_hd_wallet_from_mnemonic():
