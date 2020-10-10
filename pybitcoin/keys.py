@@ -148,14 +148,9 @@ class ExtendedPrivateKey(PrivateKey):
             assert self.parent_key is None
 
     def generate_public_key(self):
-        pub = super().generate_public_key()
+        public_key = super().generate_public_key()
 
-        return ExtendedPublicKey(
-            x=pub._x,
-            y=pub._y,
-            compressed=pub.compressed,
-            chain_code=self.chain_code,
-        )
+        return ExtendedPublicKey.from_public_key(public_key, chain_code=self.chain_code)
 
     def to_wif(self) -> str:
         version = b'\x04\x35\x83\x94' if self.testnet else b'\x04\x88\xAD\xE4'
@@ -217,6 +212,10 @@ class ExtendedPublicKey(PublicKey):
     def __init__(self, chain_code: bytes, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
+
+    @classmethod
+    def from_public_key(cls, public_key: PublicKey, chain_code: bytes):
+        return cls(point=public_key._point, testnet=public_key.testnet, chain_code=chain_code)
 
     def to_wif(self) -> str:
         pass
