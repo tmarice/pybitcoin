@@ -59,7 +59,7 @@ class KeyStore:
 
         seed = hmac_sha512(key=b'Bitcoin seed', msg=root_seed)
         k = int.from_bytes(seed[:32], byteorder=BIG)
-        chain_code = int.from_bytes(seed[32:], byteorder=BIG)
+        chain_code = seed[32:]
 
         self.master_key = ExtendedPrivateKey(k=k, chain_code=chain_code, compressed=True)
 
@@ -94,7 +94,7 @@ class KeyStore:
 
         out = hmac_sha512(key=parent_key.chain_code, msg=data)
         out_l = int.from_bytes(out[:32], byteorder=BIG)
-        out_r = int.from_bytes(out[32:], byteorder=BIG)
+        out_r = out[32:]
 
         # TODO: handle case if out_l >= secp256k1.p -> proceed with next i
         # TODO: handle case if out_r = 0 -> proceed with next i
