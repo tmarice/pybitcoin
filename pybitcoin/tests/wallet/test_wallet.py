@@ -2,10 +2,9 @@ import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
 
-from pybitcoin.keys import BIG
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS
 from pybitcoin.tests.wallet.fixtures import BIP_32_TEST_VECTORS
-from pybitcoin.wallet import HDWallet, KeyStore, hmac_sha512, validate_mnemonic
+from pybitcoin.wallet import KeyStore, hmac_sha512, validate_mnemonic
 
 
 @st.composite
@@ -76,9 +75,11 @@ def test_hd_wallet_new():
     pass
 
 
-@pytest.mark.parametrize('seed,path,expected_pub, expected_priv', BIP_32_TEST_VECTORS)
-def test_key_store_get_key(seed, path, expected_pub, expected_priv):
-    seed = seed.to_bytes(32, byteorder=BIG)
-    wallet = HDWallet(seed=seed)
-    k = wallet._key_store
-    k.get_key(path)
+@pytest.mark.parametrize('seed_hex,path,expected_pub, expected_priv', BIP_32_TEST_VECTORS)
+def test_key_store_get_key(seed_hex, path, expected_pub, expected_priv):
+    import ipdb; ipdb.set_trace(); # XXX: Breakpoint
+    seed = bytes.fromhex(seed_hex)
+    key_store = KeyStore(root_seed=seed)
+    derived_key = key_store.get_key(path)
+
+    assert derived_key.to_wif() == expected_priv
