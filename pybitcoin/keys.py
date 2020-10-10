@@ -135,17 +135,16 @@ class PrivateKey:
 
 
 class ExtendedPrivateKey(PrivateKey):
-    def __init__(self, chain_code: bytes, depth=0, index=0, parent_key=None, *args, **kwargs):
+    def __init__(self, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
-        self.depth = depth
-        self.index = index
-        self.parent_key = parent_key  # Parent public key
 
-        # TODO: refactor
-        if self.depth == 0:
-            assert self.index == 0
-            assert self.parent_key is None
+        self._depth = depth
+        self._parent_fingerprint = parent_fingerprint
+        self._index = index
+
+    def __repr__(self):
+        return f'ExtendedPrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self.compressed})'
 
     def generate_public_key(self):
         public_key = super().generate_public_key()
@@ -153,14 +152,15 @@ class ExtendedPrivateKey(PrivateKey):
         return ExtendedPublicKey.from_public_key(public_key, chain_code=self.chain_code)
 
     def to_wif(self) -> str:
-        version = b'\x04\x35\x83\x94' if self.testnet else b'\x04\x88\xAD\xE4'
-        depth = self.index.to_bytes(1, byteorder=BIG)
-        fingerprint = (0).to_bytes(4, byteorder=BIG) if self.depth == 0 else self.parent_key.identifier()[:4]
-        index = self.index.to_bytes(4, byterorder=BIG)
+        # TODO: move self.testnet to self.mainnet, this is inverse logic
+        version = b'\x04\x88\xAD\xE4' if not self._testnet else b'\x04\x35\x83\x94'
+        depth = self._depth.to_bytes(1, byteorder=BIG)
+        child_number = self._index.to_bytes(4, byteorder=BIG)
+        key = self.k.to_bytes(32, byteorder=BIG)
         chain_code = self.chain_code.to_bytes(32, byteorder=BIG)
-        key_data = b'\x00' + self.k.to_bytes(32, byteorder=BIG)
 
-        return base58check_encode(version + depth + fingerprint + index + chain_code + key_data)
+        payload = version + depth + self._parent_fingerprint + child_number + chain_code + b'\x00' + key
+        return base58check_encode(payload)
 
     @classmethod
     def from_wif(self, data: str):
