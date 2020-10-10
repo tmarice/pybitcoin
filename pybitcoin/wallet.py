@@ -87,12 +87,14 @@ class KeyStore:
         return indexes
 
     def _derive_key(self, parent_key: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
+        public_key = parent_key.generate_public_key()
         if index >= HARDENED_CHILD_INDEX:  # hardened key derivation
             data = b'\x00' + parent_key.k.to_bytes(32, byteorder=BIG)
 
-        else:  # regular derivation
-            public_key = parent_key.generate_public_key()
+        else:  # regular key derivation
             data = public_key._get_data()
+
+        data += index.to_bytes(4, byteorder=BIG)
 
         out = hmac_sha512(key=parent_key.chain_code, msg=data)
         out_l = int.from_bytes(out[:32], byteorder=BIG)
