@@ -79,6 +79,7 @@ class KeyStore:
             raise ValueError('Invalid key derivation path!')
 
         for level in levels[1:]:
+            # TODO: handle non-integers
             if level[-1] == "'":
                 indexes.append(int(level[:-1]) + HARDENED_CHILD_INDEX)
             else:
