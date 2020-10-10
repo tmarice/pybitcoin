@@ -109,6 +109,7 @@ class KeyStore:
             k=k,
             chain_code=out_r,
             depth=parent_key.depth + 1,
+            parent_fingerprint=public_key.get_identifier()[:4],
             index=index,
             testnet=parent_key.testnet,
             compressed=parent_key.compressed,
