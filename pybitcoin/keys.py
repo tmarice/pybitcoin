@@ -79,20 +79,20 @@ class PrivateKey:
         if k is not None and not (0 < k < secp256k1.p):
             raise InvalidKeyError(f'k={k} must be >0 and <{secp256k1.p}')
         self.k = randbelow(secp256k1.n) if k is None else k
-        self._testnet = testnet
+        self.testnet = testnet
         self.compressed = compressed
 
     def __repr__(self):
-        return f'PrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self.compressed})'
+        return f'PrivateKey(k={hex(self.k)}, testnet={self.testnet}, compressed={self.compressed})'
 
     def __eq__(self, other):
-        return self.k == other.k and self.compressed == other.compressed and self._testnet == other._testnet
+        return self.k == other.k and self.compressed == other.compressed and self.testnet == other.testnet
 
     def generate_public_key(self):
-        return PublicKey(point=self.k * Point.gen(), testnet=self._testnet)
+        return PublicKey(point=self.k * Point.gen(), testnet=self.testnet)
 
     def to_wif(self) -> str:
-        prefix = b'\xef' if self._testnet else b'\x80'
+        prefix = b'\xef' if self.testnet else b'\x80'
         key = self.k.to_bytes(32, byteorder=BIG)
         suffix = b'\x01' if self.compressed else b''
 
@@ -139,12 +139,12 @@ class ExtendedPrivateKey(PrivateKey):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
 
-        self._depth = depth
+        self.depth = depth
         self._parent_fingerprint = parent_fingerprint
         self._index = index
 
     def __repr__(self):
-        return f'ExtendedPrivateKey(k={hex(self.k)}, testnet={self._testnet}, compressed={self.compressed})'
+        return f'ExtendedPrivateKey(k={hex(self.k)}, testnet={self.testnet}, compressed={self.compressed})'
 
     def generate_public_key(self):
         public_key = super().generate_public_key()
@@ -153,13 +153,12 @@ class ExtendedPrivateKey(PrivateKey):
 
     def to_wif(self) -> str:
         # TODO: move self.testnet to self.mainnet, this is inverse logic
-        version = b'\x04\x88\xAD\xE4' if not self._testnet else b'\x04\x35\x83\x94'
-        depth = self._depth.to_bytes(1, byteorder=BIG)
+        version = b'\x04\x88\xAD\xE4' if not self.testnet else b'\x04\x35\x83\x94'
+        depth = self.depth.to_bytes(1, byteorder=BIG)
         child_number = self._index.to_bytes(4, byteorder=BIG)
         key = self.k.to_bytes(32, byteorder=BIG)
-        chain_code = self.chain_code.to_bytes(32, byteorder=BIG)
 
-        payload = version + depth + self._parent_fingerprint + child_number + chain_code + b'\x00' + key
+        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + b'\x00' + key
         return base58check_encode(payload)
 
     @classmethod
@@ -171,10 +170,10 @@ class PublicKey:
     def __init__(self, point: Point, testnet=False):
         self._point = point
         self._data = None
-        self._testnet = testnet
+        self.testnet = testnet
 
     def __repr__(self):
-        return f'PublicKey(x={hex(self._x)}, y={hex(self._y)}, compressed={self.compressed})'
+        return f'PublicKey(x={hex(self.x)}, y={hex(self.y)}, compressed={self.compressed})'
 
     @property
     def x(self):
@@ -202,7 +201,7 @@ class PublicKey:
         return ripemd160(sha256(self._get_data(compressed=compressed)))
 
     def to_address(self, compressed=True) -> str:
-        prefix = b'\x00' if not self._testnet else b'\x6f'
+        prefix = b'\x00' if not self.testnet else b'\x6f'
         return base58check_encode(payload=prefix + self.get_identifier(compressed=compressed))
 
     def to_hex(self, compressed=True) -> str:
