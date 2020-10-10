@@ -70,6 +70,8 @@ class KeyStore:
         for index in indexes:
             key = self._derive_key(parent_key=key, index=index)
 
+        return key
+
     def _get_indexes(self, levels):
         indexes = []
 
