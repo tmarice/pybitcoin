@@ -184,6 +184,7 @@ class PublicKey:
     def y(self):
         return self._point.y
 
+    # TODO: rename this
     def _get_data(self, compressed=True):
         if self._data is not None:
             return self._data

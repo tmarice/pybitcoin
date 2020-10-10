@@ -1,10 +1,9 @@
 import hashlib
 import hmac
-from math import ceil
 from secrets import randbits
 
 from pybitcoin.ecc import secp256k1
-from pybitcoin.keys import BIG, ExtendedPrivateKey, ExtendedPublicKey, sha256
+from pybitcoin.keys import BIG, ExtendedPrivateKey, sha256
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {i: 2 ** i - 1 for i in range(4, 9)}
@@ -52,8 +51,8 @@ class UseNextIndex(ValueError):
 
 
 class KeyStore:
-    MASTER_PRIVATE = 'M'
-    MASTER_PUBLIC = 'm'
+    MASTER = 'm'
+    RE_PATH = r"(\d+)'?"
 
     def __init__(self, root_seed: bytes):
         self._keys = {}
@@ -62,45 +61,53 @@ class KeyStore:
         k = int.from_bytes(seed[:32], byteorder=BIG)
         chain_code = int.from_bytes(seed[32:], byteorder=BIG)
 
-        # TODO: parent master key doesn't have to be compressed, it's just a representation format ???
-        # We'll keep it like that for now, and then see if it's only public key format that's important
-        self._keys[self.MASTER_PRIVATE] = ExtendedPrivateKey(k=k, chain_code=chain_code, compressed=True)
-        self._keys[self.MASTER_PUBLIC] = self._keys[self.MASTER_PRIVATE].generate_public_key()
+        self.master_key = ExtendedPrivateKey(k=k, chain_code=chain_code, compressed=True)
 
-    def _derive_private_key(self, parent: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
-        # TODO: check if index > hardened limit, then redirect to hardened key derivation
-        # TODO: cache this public key
-        # TODO: THIS DOESNT WORK, FIX
-        import ipdb
+    def get_key(self, path: str):
+        indexes = self._get_indexes(path.split('/'))
 
-        ipdb.set_trace()
-        # XXX: Breakpoint
-        public = parent.generate_public_key()
-        key = parent.chain_code.to_bytes(32, byteorder=BIG)
-        msg = public._data + (index.to_bytes(ceil(index.bit_length() / 8), byteorder=BIG) or b'\x00')
-        data = hmac_sha512(key, msg)
+        key = self.master_key
+        for index in indexes:
+            key = self._derive_key(parent_key=key, index=index)
 
-        left = int.from_bytes(data[:32], byteorder=BIG)
-        right = int.from_bytes(data[32:], byteorder=BIG)
+    def _get_indexes(self, levels):
+        indexes = []
 
-        if left >= secp256k1.p:
-            raise UseNextIndex
+        if levels[0] != self.MASTER:
+            raise ValueError('Invalid key derivation path!')
 
-        k = (left + parent.k) % secp256k1.p
+        for level in levels[1:]:
+            if level[-1] == "'":
+                indexes.append(int(level[:-1]) + HARDENED_CHILD_INDEX)
+            else:
+                indexes.append(int(level))
 
-        if k == 0:
-            raise UseNextIndex
+        return indexes
 
-        return ExtendedPrivateKey(k=k, chain_code=right)
+    def _derive_key(self, parent_key: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
+        if index >= HARDENED_CHILD_INDEX:  # hardened key derivation
+            data = b'\x00' + parent_key.k.to_bytes(32, byteorder=BIG)
 
-    def _derive_public_key(self, parent: ExtendedPublicKey, index: int) -> ExtendedPublicKey:
-        pass
+        else:  # regular derivation
+            public_key = parent_key.generate_public_key()
+            data = public_key._get_data()
 
-    def _derive_hardened_private_key(self, parent: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
-        pass
+        out = hmac_sha512(key=parent_key.chain_code, msg=data)
+        out_l = int.from_bytes(out[:32], byteorder=BIG)
+        out_r = int.from_bytes(out[32:], byteorder=BIG)
 
-    def derive_key(self, path: str):
-        elements = path.split('/')
+        # TODO: handle case if out_l >= secp256k1.p -> proceed with next i
+        # TODO: handle case if out_r = 0 -> proceed with next i
+        k = (out_l + parent_key.k) % secp256k1.p
+
+        return ExtendedPrivateKey(
+            k=k,
+            chain_code=out_r,
+            depth=parent_key.depth + 1,
+            index=index,
+            testnet=parent_key.testnet,
+            compressed=parent_key.compressed,
+        )
 
 
 class HDWallet:
