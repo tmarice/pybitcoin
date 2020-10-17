@@ -138,7 +138,6 @@ class ExtendedPrivateKey(PrivateKey):
     def __init__(self, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
-
         self.depth = depth
         self._parent_fingerprint = parent_fingerprint
         self._index = index
