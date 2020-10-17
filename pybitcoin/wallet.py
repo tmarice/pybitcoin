@@ -103,7 +103,7 @@ class KeyStore:
 
         # TODO: handle case if out_l >= secp256k1.p -> proceed with next i
         # TODO: handle case if out_r = 0 -> proceed with next i
-        k = (out_l + parent_key.k) % secp256k1.p
+        k = (out_l + parent_key.k) % secp256k1.n
 
         return ExtendedPrivateKey(
             k=k,
