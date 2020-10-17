@@ -148,7 +148,13 @@ class ExtendedPrivateKey(PrivateKey):
     def generate_public_key(self):
         public_key = super().generate_public_key()
 
-        return ExtendedPublicKey.from_public_key(public_key, chain_code=self.chain_code)
+        return ExtendedPublicKey.from_public_key(
+            public_key,
+            chain_code=self.chain_code,
+            depth=self.depth,
+            parent_fingerprint=self._parent_fingerprint,
+            index=self._index,
+        )
 
     def to_wif(self) -> str:
         # TODO: move self.testnet to self.mainnet, this is inverse logic
