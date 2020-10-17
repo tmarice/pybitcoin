@@ -101,9 +101,13 @@ class KeyStore:
         out_l = int.from_bytes(out[:32], byteorder=BIG)
         out_r = out[32:]
 
-        # TODO: handle case if out_l >= secp256k1.p -> proceed with next i
-        # TODO: handle case if out_r = 0 -> proceed with next i
+        if out_l >= secp256k1.n:
+            raise UseNextIndex
+
         k = (out_l + parent_key.k) % secp256k1.n
+
+        if k == 0:
+            raise UseNextIndex
 
         return ExtendedPrivateKey(
             k=k,
