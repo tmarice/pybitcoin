@@ -76,8 +76,8 @@ class InvalidKeyError(ValueError):
 
 class PrivateKey:
     def __init__(self, k: int = None, testnet=False, compressed=False):
-        if k is not None and not (0 < k < secp256k1.p):
-            raise InvalidKeyError(f'k={k} must be >0 and <{secp256k1.p}')
+        if k is not None and not (0 < k < secp256k1.n):
+            raise InvalidKeyError(f'k={k} must be >0 and <{secp256k1.n}')
         self.k = randbelow(secp256k1.n) if k is None else k
         self.testnet = testnet
         self.compressed = compressed
