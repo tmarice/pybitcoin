@@ -1,0 +1,2 @@
+-c requirements.txt
+ipdb==0.13.3
