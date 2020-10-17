@@ -77,9 +77,10 @@ def test_hd_wallet_new():
 
 @pytest.mark.parametrize('seed_hex,path,expected_pub, expected_priv', BIP_32_TEST_VECTORS)
 def test_key_store_get_key(seed_hex, path, expected_pub, expected_priv):
-    import ipdb; ipdb.set_trace(); # XXX: Breakpoint
     seed = bytes.fromhex(seed_hex)
     key_store = KeyStore(root_seed=seed)
     derived_key = key_store.get_key(path)
+    derived_public_key = derived_key.generate_public_key()
 
     assert derived_key.to_wif() == expected_priv
+    assert derived_public_key.to_wif() == expected_pub
