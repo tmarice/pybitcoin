@@ -178,7 +178,7 @@ class PublicKey:
         self.testnet = testnet
 
     def __repr__(self):
-        return f'PublicKey(x={hex(self.x)}, y={hex(self.y)}, compressed={self.compressed})'
+        return f'PublicKey(x={hex(self.x)}, y={hex(self.y)})'
 
     @property
     def x(self):
@@ -214,16 +214,28 @@ class PublicKey:
 
 
 class ExtendedPublicKey(PublicKey):
-    def __init__(self, chain_code: bytes, *args, **kwargs):
+    def __init__(self, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.chain_code = chain_code
+        self.depth = depth
+        self._parent_fingerprint = parent_fingerprint
+        self._index = index
+
+    def __repr__(self):
+        return f'ExtendedPublicKey(x={hex(self.x)}, y={hex(self.y)})'
 
     @classmethod
-    def from_public_key(cls, public_key: PublicKey, chain_code: bytes):
-        return cls(point=public_key._point, testnet=public_key.testnet, chain_code=chain_code)
+    def from_public_key(cls, public_key: PublicKey, *args, **kwargs):
+        return cls(point=public_key._point, *args, **kwargs)
 
     def to_wif(self) -> str:
-        pass
+        version = b'\x04\x88\xB2\x1E' if not self.testnet else b'\x04\x35\x87\xCF'
+        depth = self.depth.to_bytes(1, byteorder=BIG)
+        child_number = self._index.to_bytes(4, byteorder=BIG)
+        key = self._get_data()
+
+        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + key
+        return base58check_encode(payload)
 
     @classmethod
     def from_wif(self, data: str):
