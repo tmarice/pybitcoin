@@ -1,3 +1,5 @@
+import string
+
 import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
@@ -29,7 +31,10 @@ def test_validate_mnemonic_wrong_number_of_words(num_words, data):
 @given(
     num_words=st.sampled_from([11, 14, 17, 20, 23]),
     data=st.data(),
-    extra_word=st.text(max_size=10),
+    extra_word=st.text(
+        alphabet=st.characters(blacklist_categories=('Cs',), blacklist_characters=string.whitespace),
+        max_size=10,
+    ),
 )
 def test_validate_mnemonic_wrong_words(num_words, data, extra_word):
     assume(extra_word not in MNEMONIC_CODE_WORDS)
