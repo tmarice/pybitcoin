@@ -1,16 +1,12 @@
 import hashlib
-import hmac
 from secrets import randbits
 
-from pybitcoin.ecc import secp256k1
-from pybitcoin.keys import BIG, ExtendedPrivateKey, sha256
+from pybitcoin.keys import BIG, HARDENED_CHILD_INDEX, ExtendedPrivateKey, PrivateKey, hmac_sha512, sha256
 from pybitcoin.mnemonic_code_words import MNEMONIC_CODE_WORDS, REVERSE_MNEMONIC_CODE_WORDS
 
 CHECKSUM_MASKS = {i: 2 ** i - 1 for i in range(4, 9)}
 
 WORD_MASK = 2 ** 11 - 1
-
-HARDENED_CHILD_INDEX = 2 ** 31
 
 
 def validate_mnemonic(mnemonic: str):
@@ -40,16 +36,6 @@ def validate_mnemonic(mnemonic: str):
         raise ValueError('Invalid checksum of mnemonic sequence!')
 
 
-def hmac_sha512(key, msg):
-    if 'sha512' not in hashlib.algorithms_available:
-        raise Exception('Make sure your OpenSSL version provides SHA-512 algorithm!')
-    return hmac.digest(key=key, msg=msg, digest='sha512')
-
-
-class UseNextIndex(ValueError):
-    pass
-
-
 class KeyStore:
     MASTER = 'm'
     RE_PATH = r"(\d+)'?"
@@ -61,7 +47,11 @@ class KeyStore:
         k = int.from_bytes(seed[:32], byteorder=BIG)
         chain_code = seed[32:]
 
-        self.master_key = ExtendedPrivateKey(k=k, chain_code=chain_code, compressed=True)
+        self.master_key = ExtendedPrivateKey(
+            key=PrivateKey(k=k, compressed=True),
+            chain_code=chain_code,
+            compressed=True,
+        )
 
     def get_key(self, path: str):
         indexes = self._get_indexes(path.split('/'))
@@ -86,38 +76,6 @@ class KeyStore:
                 indexes.append(int(level))
 
         return indexes
-
-    def _derive_key(self, parent_key: ExtendedPrivateKey, index: int) -> ExtendedPrivateKey:
-        public_key = parent_key.generate_public_key()
-        if index >= HARDENED_CHILD_INDEX:  # hardened key derivation
-            data = b'\x00' + parent_key.k.to_bytes(32, byteorder=BIG)
-
-        else:  # regular key derivation
-            data = public_key._get_data()
-
-        data += index.to_bytes(4, byteorder=BIG)
-
-        out = hmac_sha512(key=parent_key.chain_code, msg=data)
-        out_l = int.from_bytes(out[:32], byteorder=BIG)
-        out_r = out[32:]
-
-        if out_l >= secp256k1.n:
-            raise UseNextIndex
-
-        k = (out_l + parent_key.k) % secp256k1.n
-
-        if k == 0:
-            raise UseNextIndex
-
-        return ExtendedPrivateKey(
-            k=k,
-            chain_code=out_r,
-            depth=parent_key.depth + 1,
-            parent_fingerprint=public_key.get_identifier()[:4],
-            index=index,
-            testnet=parent_key.testnet,
-            compressed=parent_key.compressed,
-        )
 
 
 class HDWallet:

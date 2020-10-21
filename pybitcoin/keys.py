@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import hashlib
+import hmac
 from itertools import takewhile
 from math import ceil
 from secrets import randbelow
@@ -6,6 +9,14 @@ from secrets import randbelow
 from tqdm import tqdm
 
 from pybitcoin.ecc import Point, secp256k1
+
+HARDENED_CHILD_INDEX = 2 ** 31
+
+
+def hmac_sha512(key, msg):
+    if 'sha512' not in hashlib.algorithms_available:
+        raise Exception('Make sure your OpenSSL version provides SHA-512 algorithm!')
+    return hmac.digest(key=key, msg=msg, digest='sha512')
 
 
 def sha256(data: bytes) -> bytes:
@@ -91,13 +102,16 @@ class PrivateKey:
     def generate_public_key(self):
         return PublicKey(point=self.k * Point.gen(), testnet=self.testnet)
 
-    def to_wif(self) -> str:
-        prefix = b'\xef' if self.testnet else b'\x80'
-        key = self.k.to_bytes(32, byteorder=BIG)
-        suffix = b'\x01' if self.compressed else b''
+    def encode(self, prefix=b'', suffix=b''):
+        return prefix + self.k.to_bytes(32, byteorder=BIG) + suffix
 
-        payload = prefix + key + suffix
-        return base58check_encode(payload)
+    def to_wif(self) -> str:
+        return base58check_encode(
+            self.encode(
+                prefix=b'\xef' if self.testnet else b'\x80',
+                suffix=b'\x01' if self.compressed else b'',
+            )
+        )
 
     @classmethod
     def from_wif(self, data: str):
@@ -134,47 +148,9 @@ class PrivateKey:
                 i += 1
 
 
-class ExtendedPrivateKey(PrivateKey):
-    def __init__(self, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.chain_code = chain_code
-        self.depth = depth
-        self._parent_fingerprint = parent_fingerprint
-        self._index = index
-
-    def __repr__(self):
-        return f'ExtendedPrivateKey(k={hex(self.k)}, testnet={self.testnet}, compressed={self.compressed})'
-
-    def generate_public_key(self):
-        public_key = super().generate_public_key()
-
-        return ExtendedPublicKey.from_public_key(
-            public_key,
-            chain_code=self.chain_code,
-            depth=self.depth,
-            parent_fingerprint=self._parent_fingerprint,
-            index=self._index,
-        )
-
-    def to_wif(self) -> str:
-        # TODO: move self.testnet to self.mainnet, this is inverse logic
-        version = b'\x04\x88\xAD\xE4' if not self.testnet else b'\x04\x35\x83\x94'
-        depth = self.depth.to_bytes(1, byteorder=BIG)
-        child_number = self._index.to_bytes(4, byteorder=BIG)
-        key = self.k.to_bytes(32, byteorder=BIG)
-
-        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + b'\x00' + key
-        return base58check_encode(payload)
-
-    @classmethod
-    def from_wif(self, data: str):
-        pass
-
-
 class PublicKey:
     def __init__(self, point: Point, testnet=False):
         self._point = point
-        self._data = None
         self.testnet = testnet
 
     def __repr__(self):
@@ -188,55 +164,170 @@ class PublicKey:
     def y(self):
         return self._point.y
 
-    # TODO: rename this
-    def _get_data(self, compressed=True):
-        if self._data is not None:
-            return self._data
-
+    def encode(self, compressed=True):
         if compressed:
             prefix = b'\x02' if self.y % 2 == 0 else b'\x03'
-            self._data = prefix + self.x.to_bytes(32, byteorder=BIG)
+            return prefix + self.x.to_bytes(32, byteorder=BIG)
         else:
             prefix = b'\x04'
-            self._data = prefix + self.x.to_bytes(32, byteorder=BIG) + self.y.to_bytes(32, byteorder=BIG)
-
-        return self._data
+            return prefix + self.x.to_bytes(32, byteorder=BIG) + self.y.to_bytes(32, byteorder=BIG)
 
     def get_identifier(self, compressed=True) -> bytes:
-        return ripemd160(sha256(self._get_data(compressed=compressed)))
+        return ripemd160(sha256(self.encode(compressed=compressed)))
 
     def to_address(self, compressed=True) -> str:
         prefix = b'\x00' if not self.testnet else b'\x6f'
         return base58check_encode(payload=prefix + self.get_identifier(compressed=compressed))
 
     def to_hex(self, compressed=True) -> str:
-        return self._get_data(compressed=compressed).hex()
+        return self.encode(compressed=compressed).hex()
 
 
-class ExtendedPublicKey(PublicKey):
-    def __init__(self, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class ExtendedKey:
+    VERSIONS = {
+        'testnet': b'',
+        'mainnet': b'',
+    }
+
+    def __init__(self, key, chain_code: bytes, depth=0, parent_fingerprint=b'\x00\x00\x00\x00', index=0):
+        self._validate_key(key)
+
+        self.key = key
         self.chain_code = chain_code
         self.depth = depth
-        self._parent_fingerprint = parent_fingerprint
-        self._index = index
+        self.parent_fingerprint = parent_fingerprint
+        self.index = index
 
-    def __repr__(self):
-        return f'ExtendedPublicKey(x={hex(self.x)}, y={hex(self.y)})'
+    def _validate_key(self, key):
+        raise NotImplementedError
 
-    @classmethod
-    def from_public_key(cls, public_key: PublicKey, *args, **kwargs):
-        return cls(point=public_key._point, *args, **kwargs)
+    def _get_encoded_key(self):
+        raise NotImplementedError
+
+    def _get_version(self):
+        return self.VERSIONS['testnet' if self.key.testnet else 'mainnet']
 
     def to_wif(self) -> str:
-        version = b'\x04\x88\xB2\x1E' if not self.testnet else b'\x04\x35\x87\xCF'
+        version = self._get_version()
         depth = self.depth.to_bytes(1, byteorder=BIG)
         child_number = self._index.to_bytes(4, byteorder=BIG)
-        key = self._get_data()
+        encoded_key = self._get_encoded_key()
 
-        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + key
+        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + encoded_key
         return base58check_encode(payload)
 
-    @classmethod
     def from_wif(self, data: str):
         pass
+
+    def derive_private_child(self, index: int):
+        raise NotImplementedError
+
+    def derive_public_child(self, index: int):
+        raise NotImplementedError
+
+
+class ExtendedPrivateKey(ExtendedKey):
+    VERSIONS = {
+        'testnet': b'\x04\x35\x83\x94',
+        'mainnet': b'\x04\x88\xAD\xE4',
+    }
+
+    def __repr__(self):
+        return f'ExtendedPrivateKey(key={self.key}, index={self.index}'
+
+    def _validate_key(self, key):
+        if not isinstance(key, PrivateKey):
+            raise ValueError('Private key must be supplied!')
+
+    def _get_encoded_key(self) -> bytes:
+        return self.key.encode(prefix=b'\x00')
+
+    def derive_private_child(self, index: int) -> ExtendedPrivateKey:
+        public_key = self.key.generate_public_key()
+
+        if index >= HARDENED_CHILD_INDEX:
+            data = self.key.encode(prefix=b'\x00')
+
+        else:
+            data = public_key.encode(compressed=True)
+
+        data += index.to_bytes(4, byteorder=BIG)
+
+        out = hmac_sha512(key=self.key.chain_code, msg=data)
+        out_l = int.from_bytes(out[:32], byteorder=BIG)
+        out_r = out[32:]
+
+        if out_l >= secp256k1.n:
+            raise UseNextIndex
+
+        k = (out_l + self.key.k) % secp256k1.n
+
+        if k == 0:
+            raise UseNextIndex
+
+        return ExtendedPrivateKey(
+            key=PrivateKey(k=k, testnet=self.key.testnet, compressed=True),
+            chain_code=out_r,
+            depth=self.depth + 1,
+            parent_fingerprint=public_key.get_identifier()[:4],
+            index=index,
+        )
+
+    def derive_public_child(self, index: int) -> ExtendedPublicKey:
+        if index >= HARDENED_CHILD_INDEX:
+            raise ValueError('Cannot derive public children for hardened private keys!')
+
+        private_child = self.derive_private_child(index=index)
+        return ExtendedPublicKey(
+            key=private_child.key.generate_public_key(),
+            chain_code=private_child.chain_code,
+            depth=private_child.depth,
+            parent_fingerprint=self.key.generate_public_key().get_identifier()[:4],
+            index=index,
+        )
+
+
+class ExtendedPublicKey(ExtendedKey):
+    VERSIONS = {
+        'testnet': b'\x04\x35\x87\xCF',
+        'mainnet': b'\x04\x88\xB2\x1E',
+    }
+
+    def _get_encoded_key(self) -> bytes:
+        return self.key.encode(compressed=True)
+
+    def __repr__(self):
+        return f'ExtendedPublicKey(key={self.key}, index={self.index}'
+
+    def derive_private_child(self, index: int):
+        raise RuntimeError('Cannot generate private key from public key!')
+
+    def derive_public_child(self, index: int) -> ExtendedPublicKey:
+        if index >= HARDENED_CHILD_INDEX:
+            raise ValueError('Cannot derive hardened public keys!')
+
+        data = self.key.encode() + index.to_bytes(4, byteorder=BIG)
+
+        out = hmac_sha512(key=self.key.chain_code, msg=data)
+        out_l = int.from_bytes(out[:32], byteorder=BIG)
+        out_r = out[32:]
+
+        if out_l >= secp256k1.n:
+            raise UseNextIndex
+
+        child_key_point = PrivateKey(k=out_l).generate_public_key().point + self.key.point
+        if child_key_point == Point.inf():
+            raise UseNextIndex
+
+        child_key = PublicKey(point=child_key_point, testnet=self.key.testnet, compressed=True)
+        return ExtendedPublicKey(
+            key=child_key,
+            chain_code=out_r,
+            depth=self.depth + 1,
+            parent_fingerprint=self.key.get_identifier()[:4],
+            index=index,
+        )
+
+
+class UseNextIndex(ValueError):
+    pass
