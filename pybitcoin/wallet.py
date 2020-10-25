@@ -47,18 +47,15 @@ class KeyStore:
         k = int.from_bytes(seed[:32], byteorder=BIG)
         chain_code = seed[32:]
 
-        self.master_key = ExtendedPrivateKey(
-            key=PrivateKey(k=k, compressed=True),
-            chain_code=chain_code,
-            compressed=True,
-        )
+        private_key = PrivateKey(k=k, compressed=True)
+        self.master_key = ExtendedPrivateKey(key=private_key, chain_code=chain_code)
 
     def get_key(self, path: str):
         indexes = self._get_indexes(path.split('/'))
 
         key = self.master_key
         for index in indexes:
-            key = self._derive_key(parent_key=key, index=index)
+            key = key.derive_private_child(index=index)
 
         return key
 

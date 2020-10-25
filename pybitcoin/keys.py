@@ -253,7 +253,7 @@ class ExtendedPrivateKey(ExtendedKey):
 
         data += index.to_bytes(4, byteorder=BIG)
 
-        out = hmac_sha512(key=self.key.chain_code, msg=data)
+        out = hmac_sha512(key=self.chain_code, msg=data)
         out_l = int.from_bytes(out[:32], byteorder=BIG)
         out_r = out[32:]
 
@@ -273,17 +273,13 @@ class ExtendedPrivateKey(ExtendedKey):
             index=index,
         )
 
-    def derive_public_child(self, index: int) -> ExtendedPublicKey:
-        if index >= HARDENED_CHILD_INDEX:
-            raise ValueError('Cannot derive public children for hardened private keys!')
-
-        private_child = self.derive_private_child(index=index)
+    def generate_public_key(self):
         return ExtendedPublicKey(
-            key=private_child.key.generate_public_key(),
-            chain_code=private_child.chain_code,
-            depth=private_child.depth,
-            parent_fingerprint=self.key.generate_public_key().get_identifier()[:4],
-            index=index,
+            key=self.key.generate_public_key(),
+            chain_code=self.chain_code,
+            depth=self.depth,
+            parent_fingerprint=self.parent_fingerprint,
+            index=self.index,
         )
 
 
@@ -308,7 +304,7 @@ class ExtendedPublicKey(ExtendedKey):
 
         data = self.key.encode() + index.to_bytes(4, byteorder=BIG)
 
-        out = hmac_sha512(key=self.key.chain_code, msg=data)
+        out = hmac_sha512(key=self.chain_code, msg=data)
         out_l = int.from_bytes(out[:32], byteorder=BIG)
         out_r = out[32:]
 
