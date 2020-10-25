@@ -210,10 +210,10 @@ class ExtendedKey:
     def to_wif(self) -> str:
         version = self._get_version()
         depth = self.depth.to_bytes(1, byteorder=BIG)
-        child_number = self._index.to_bytes(4, byteorder=BIG)
+        child_number = self.index.to_bytes(4, byteorder=BIG)
         encoded_key = self._get_encoded_key()
 
-        payload = version + depth + self._parent_fingerprint + child_number + self.chain_code + encoded_key
+        payload = version + depth + self.parent_fingerprint + child_number + self.chain_code + encoded_key
         return base58check_encode(payload)
 
     def from_wif(self, data: str):
@@ -294,6 +294,10 @@ class ExtendedPublicKey(ExtendedKey):
 
     def __repr__(self):
         return f'ExtendedPublicKey(key={self.key}, index={self.index}'
+
+    def _validate_key(self, key):
+        if not isinstance(key, PublicKey):
+            raise ValueError('Public key must be supplied!')
 
     def derive_private_child(self, index: int):
         raise RuntimeError('Cannot generate private key from public key!')

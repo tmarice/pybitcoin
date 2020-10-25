@@ -121,8 +121,8 @@ def test_public_key_x_y_properties(coords):
     coords=st.sampled_from(POINTS),
     compressed=st.booleans(),
 )
-def test_public_key_get_data(coords, compressed):
-    data = PublicKey(point=Point(*coords))._get_data(compressed=compressed)
+def test_public_key_encode(coords, compressed):
+    data = PublicKey(point=Point(*coords)).encode(compressed=compressed)
 
     if compressed:
         expected_length = 33
