@@ -150,7 +150,7 @@ class PrivateKey:
 
 class PublicKey:
     def __init__(self, point: Point, testnet=False):
-        self._point = point
+        self.point = point
         self.testnet = testnet
 
     def __repr__(self):
@@ -158,11 +158,11 @@ class PublicKey:
 
     @property
     def x(self):
-        return self._point.x
+        return self.point.x
 
     @property
     def y(self):
-        return self._point.y
+        return self.point.y
 
     def encode(self, compressed=True):
         if compressed:
@@ -319,7 +319,7 @@ class ExtendedPublicKey(ExtendedKey):
         if child_key_point == Point.inf():
             raise UseNextIndex
 
-        child_key = PublicKey(point=child_key_point, testnet=self.key.testnet, compressed=True)
+        child_key = PublicKey(point=child_key_point, testnet=self.key.testnet)
         return ExtendedPublicKey(
             key=child_key,
             chain_code=out_r,
