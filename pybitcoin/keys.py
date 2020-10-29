@@ -219,12 +219,6 @@ class ExtendedKey:
     def from_wif(self, data: str):
         pass
 
-    def derive_private_child(self, index: int):
-        raise NotImplementedError
-
-    def derive_public_child(self, index: int):
-        raise NotImplementedError
-
 
 class ExtendedPrivateKey(ExtendedKey):
     VERSIONS = {
