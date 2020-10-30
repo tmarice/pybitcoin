@@ -1,6 +1,16 @@
-def varint(x: int) -> bytes:
-    '''Encodes the integer using VarInt method.'''
-    pass
+MSB = 2 ** 7
+VARINT_MASK = 2 ** 7 - 1
+
+def varint_encode(x: int) -> bytes:
+    data = b''
+    while x:
+        number = x & VARINT_MASK
+        x >>= 7
+        if x:
+            number |= MSB
+        data += number.to_bytes(1, byteorder='big')
+
+    return data
 
 
 class Vin:
@@ -25,8 +35,7 @@ class Vout:
 
     def serialize(self) -> bytes:
         value = self.value.to_bytes(8, byteorder='little')
-        script_length = varint(len(self.script_pub_key))
-
+        script_length = varint_encode(len(self.script_pub_key))
 
 
 class Transaction:
