@@ -2049,4 +2049,4 @@ MNEMONIC_CODE_WORDS = [
     'zoo',
 ]
 
-REVERSE_MNEMONIC_CODE_WORDS = {word: index for index, word in enumerate(MNEMONIC_CODE_WORDS}
+REVERSE_MNEMONIC_CODE_WORDS = {word: index for index, word in enumerate(MNEMONIC_CODE_WORDS)}
