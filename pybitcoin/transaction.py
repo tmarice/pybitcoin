@@ -36,6 +36,10 @@ class Vin:
 
         return txid + vout + script_sig_len + script_sig + sequence
 
+    def get_vout(self):
+        '''Return the corresponding vout'''
+        pass
+
 
 class Vout:
     __slots__ = ['value', 'scriptPubKey']
@@ -68,3 +72,7 @@ class Transaction:
         locktime = self.locktime.to_bytes(4, byteorder=LITTLE)
 
         return version + input_count + vins + output_count + vouts + locktime
+
+    @property
+    def fee(self):
+        return sum(vin.get_vout().value for vin in self.vins) - sum(vout.value for vout in self.vouts)
