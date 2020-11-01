@@ -25,7 +25,14 @@ def varint_encode(x: int) -> bytes:
 
 def varint_decode(data: bytes) -> Tuple[int, bytes]:
     '''Returns decoded varint and the remaining unconsumed data'''
-    pass
+    x = 0
+    # TODO: is there an upper limit on how big the number can be?
+    for i, b in enumerate(data):
+        x += (b & VARINT_MASK) << 7 * i
+        if not b & MSB:
+            break
+
+    return x, data[i + 1 :]
 
 
 class Vin:
