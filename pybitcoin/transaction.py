@@ -47,8 +47,8 @@ class Vin:
     def serialize(self) -> bytes:
         txid = bytes.from_hex(self.txid)
         vout_index = self.vout_index.to_bytes(4, byteorder=LITTLE)
-        script_sig_len = varint_encode(len(self.script_sig))
         script_sig = script_encode(self.script_sig)
+        script_sig_len = varint_encode(len(script_sig))
         sequence = self.sequence.to_bytes(4, byteorder=LITTLE)
 
         return txid + vout_index + script_sig_len + script_sig + sequence
@@ -74,7 +74,7 @@ class Vin:
 
 
 class Vout:
-    __slots__ = ['value', 'scriptPubKey']
+    __slots__ = ['value', 'script_pub_key']
 
     def __init__(self, value: int, script_pub_key: str):
         self.value = value
@@ -82,8 +82,8 @@ class Vout:
 
     def serialize(self) -> bytes:
         value = self.value.to_bytes(8, byteorder=LITTLE)
-        script_length = varint_encode(len(self.script_pub_key))
         script = script_encode(self.script_pub_key)
+        script_length = varint_encode(len(script))
 
         return value + script_length + script
 
