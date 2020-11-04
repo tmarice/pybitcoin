@@ -19,7 +19,19 @@ def script_encode(script: str) -> bytes:
 
 
 def script_decode(data: bytes) -> str:
-    pass
+    tokens = []
+
+    i = 0
+    while i < len(data):
+        try:
+            token = OpCodes(data[i : i + 1]).name
+        except ValueError:
+            token = data[i + 1 : i + 1 + data[i]].hex()
+            i += data[i]
+        i += 1
+        tokens.append(token)
+
+    return ' '.join(tokens)
 
 
 class OpCodes(Enum):
